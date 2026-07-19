@@ -3,8 +3,8 @@
    ========================================================= */
 
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxImGmbQ-AYdFAgEmyPOSbm1p_2H-C3i7JppvgTiyf7pkRk9U4cvlIkFmYPR4dO0QWgYA/exec",
-  REQUEST_TIMEOUT: 20000
+  API_URL: "INCOLLA_QUI_L_URL_DELLA_WEB_APP",
+  REQUEST_TIMEOUT: 45000
 };
 
 const state = {
@@ -201,16 +201,28 @@ async function caricaDisponibilita() {
   mostraCaricamento("Controllo disponibilità...");
 
   try {
-    const [ombrelloniResponse, disponibilitaResponse] = await Promise.all([
-      richiestaGet({ action: "ombrelloni" }),
-      richiestaGet({ action: "disponibilita", data })
-    ]);
+    /*
+      Un'unica richiesta riduce i tempi di avvio di Google Apps Script
+      ed evita due esecuzioni contemporanee dello stesso backend.
+    */
+    const risposta = await richiestaGet({
+      action: "mappa",
+      data
+    });
 
-    if (!ombrelloniResponse.ok) throw new Error(ombrelloniResponse.error || "Impossibile caricare gli ombrelloni.");
-    if (!disponibilitaResponse.ok) throw new Error(disponibilitaResponse.error || "Impossibile caricare la disponibilità.");
+    if (!risposta.ok) {
+      throw new Error(
+        risposta.error || "Impossibile caricare la disponibilità."
+      );
+    }
 
-    state.ombrelloni = Array.isArray(ombrelloniResponse.ombrelloni) ? ombrelloniResponse.ombrelloni : [];
-    state.disponibilita = Array.isArray(disponibilitaResponse.disponibilita) ? disponibilitaResponse.disponibilita : [];
+    state.ombrelloni = Array.isArray(risposta.ombrelloni)
+      ? risposta.ombrelloni
+      : [];
+
+    state.disponibilita = Array.isArray(risposta.disponibilita)
+      ? risposta.disponibilita
+      : [];
 
     renderizzaMappa();
     dom.umbrellaSection.classList.remove("hidden");
