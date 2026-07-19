@@ -1,6 +1,7 @@
 /* =========================================================
    PRENOTA OMBRELLONE
    Foglio di stile principale
+   Versione aggiornata: ombrelloni centrati per fila
    ========================================================= */
 
 :root {
@@ -588,18 +589,10 @@ textarea.invalid:focus {
   gap: 16px;
 }
 
-.umbrella-map .zone-title,
-.umbrella-map .umbrella-row-title {
-  flex: 0 0 100%;
-}
-
-.umbrella-map .umbrella {
-  flex: 0 0 110px;
-}
-
 .umbrella-row-title,
 .zone-title {
-  grid-column: 1 / -1;
+  flex: 0 0 100%;
+  width: 100%;
   margin-top: 4px;
   padding: 8px 10px;
   border-bottom: 1px dashed rgba(84, 64, 20, 0.25);
@@ -611,9 +604,15 @@ textarea.invalid:focus {
   text-transform: uppercase;
 }
 
+.zone-title {
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+
 .umbrella {
   position: relative;
   display: flex;
+  flex: 0 0 110px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -1225,8 +1224,8 @@ textarea.invalid:focus {
     padding: 25px;
   }
 
-  .umbrella-map {
-    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
+  .umbrella {
+    flex-basis: 100px;
   }
 }
 
@@ -1323,6 +1322,7 @@ textarea.invalid:focus {
   }
 
   .umbrella {
+    flex: 0 0 92px;
     min-height: 95px;
     padding: 8px 4px;
     border-radius: 14px;
@@ -1378,14 +1378,6 @@ textarea.invalid:focus {
     right: 10px;
     bottom: 10px;
     width: calc(100% - 20px);
-
-    .umbrella-map {
-  padding: 13px;
-  gap: 10px;
-}
-
-.umbrella-map .umbrella {
-  flex: 0 0 92px; 
   }
 }
 
@@ -1407,8 +1399,8 @@ textarea.invalid:focus {
     font-size: 1.72rem;
   }
 
-  .umbrella-map {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .umbrella {
+    flex-basis: 86px;
   }
 
   .selection-summary {
