@@ -2,7 +2,7 @@
    PRENOTA OMBRELLONE - SERVICE WORKER
    ========================================================= */
 
-const CACHE_VERSION = "prenota-ombrellone-v1.0.0";
+const CACHE_VERSION = "prenota-ombrellone-v1.1.0";
 
 const APP_FILES = [
   "./",
@@ -12,6 +12,9 @@ const APP_FILES = [
   "./admin.html",
   "./admin.css",
   "./admin.js",
+  "./mia-prenotazione.html",
+  "./mia-prenotazione.css",
+  "./mia-prenotazione.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png"

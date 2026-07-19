@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  >
+
+  <meta
+    name="description"
+    content="Controlla lo stato della prenotazione del tuo ombrellone."
+  >
+
+  <meta name="theme-color" content="#087ca7">
+
+  <title>La mia prenotazione | Prenota Ombrellone</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="mia-prenotazione.css">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+
+<body class="my-booking-page">
+
+  <div id="loadingOverlay" class="loading-overlay hidden" aria-live="polite">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p id="loadingText">Caricamento...</p>
+    </div>
+  </div>
+
+  <header class="main-header">
+    <div class="header-content">
+
+      <div class="logo-area">
+        <div class="logo-icon" aria-hidden="true">🎫</div>
+
+        <div>
+          <h1>La mia prenotazione</h1>
+          <p>Controlla lo stato o annulla la richiesta</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="index.html" class="admin-link">Prenota</a>
+        <a href="admin.html" class="admin-link">Area lido</a>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="my-booking-container">
+
+    <section class="my-booking-hero">
+      <div>
+        <span class="hero-label">Accesso cliente</span>
+        <h2>Controlla la tua richiesta</h2>
+        <p>
+          Inserisci il codice ricevuto al termine della prenotazione e
+          lo stesso numero di telefono utilizzato nel modulo.
+        </p>
+      </div>
+
+      <div class="my-booking-hero-icon" aria-hidden="true">🔎</div>
+    </section>
+
+    <section class="content-card lookup-card">
+      <div class="section-heading">
+        <div class="step-number">1</div>
+
+        <div>
+          <h2>Cerca la prenotazione</h2>
+          <p>I due dati devono corrispondere alla richiesta registrata.</p>
+        </div>
+      </div>
+
+      <form id="lookupForm" novalidate>
+        <div class="lookup-grid">
+
+          <div class="form-group">
+            <label for="bookingCode">Codice prenotazione</label>
+
+            <input
+              type="text"
+              id="bookingCode"
+              autocomplete="off"
+              maxlength="100"
+              placeholder="Esempio: LIDO-20260719-..."
+              required
+            >
+
+            <small id="bookingCodeError" class="input-error"></small>
+          </div>
+
+          <div class="form-group">
+            <label for="bookingPhone">Numero di telefono</label>
+
+            <input
+              type="tel"
+              id="bookingPhone"
+              autocomplete="tel"
+              inputmode="tel"
+              maxlength="25"
+              placeholder="Lo stesso numero usato nella prenotazione"
+              required
+            >
+
+            <small id="bookingPhoneError" class="input-error"></small>
+          </div>
+
+        </div>
+
+        <button type="submit" class="primary-button lookup-button">
+          Cerca prenotazione
+        </button>
+
+        <p id="lookupMessage" class="form-message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="bookingResult" class="content-card booking-result hidden">
+      <div class="result-heading">
+        <div>
+          <span class="result-kicker">Risultato</span>
+          <h2 id="resultCustomerName">Prenotazione</h2>
+        </div>
+
+        <span id="resultStatusBadge" class="customer-status-badge">
+          In attesa
+        </span>
+      </div>
+
+      <div id="statusExplanation" class="status-explanation"></div>
+
+      <div class="customer-booking-details">
+
+        <div class="customer-detail">
+          <span>Codice</span>
+          <strong id="resultCode">—</strong>
+        </div>
+
+        <div class="customer-detail">
+          <span>Data</span>
+          <strong id="resultDate">—</strong>
+        </div>
+
+        <div class="customer-detail">
+          <span>Ombrellone</span>
+          <strong id="resultUmbrella">—</strong>
+        </div>
+
+        <div class="customer-detail">
+          <span>Persone</span>
+          <strong id="resultPeople">—</strong>
+        </div>
+
+        <div class="customer-detail full-width">
+          <span>Note</span>
+          <strong id="resultNotes">Nessuna nota</strong>
+        </div>
+
+        <div class="customer-detail full-width">
+          <span>Richiesta inserita</span>
+          <strong id="resultCreatedAt">—</strong>
+        </div>
+
+      </div>
+
+      <div id="cancelArea" class="cancel-area hidden">
+        <div>
+          <strong>Non puoi più venire?</strong>
+          <p>
+            Puoi annullare la prenotazione. L’ombrellone tornerà disponibile.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="cancelBookingBtn"
+          class="danger-button"
+        >
+          Annulla prenotazione
+        </button>
+      </div>
+
+      <div class="result-footer-actions">
+        <button
+          type="button"
+          id="searchAnotherBtn"
+          class="secondary-button"
+        >
+          Cerca un’altra prenotazione
+        </button>
+
+        <a href="index.html" class="primary-button">
+          Nuova prenotazione
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <div
+    id="toast"
+    class="toast hidden"
+    role="status"
+    aria-live="polite"
+  >
+    <span id="toastIcon" aria-hidden="true">ℹ️</span>
+    <span id="toastMessage"></span>
+  </div>
+
+  <footer class="main-footer">
+    <p>Servizio di prenotazione senza pagamento online</p>
+  </footer>
+
+  <script src="mia-prenotazione.js"></script>
+</body>
+</html>

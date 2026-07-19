@@ -13,7 +13,7 @@
 */
 
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxImGmbQ-AYdFAgEmyPOSbm1p_2H-C3i7JppvgTiyf7pkRk9U4cvlIkFmYPR4dO0QWgYA/exec",
+  API_URL: "INCOLLA_QUI_L_URL_DELLA_WEB_APP",
   REQUEST_TIMEOUT: 20000
 };
 
@@ -599,6 +599,11 @@ async function inviaPrenotazione(event) {
       );
     }
 
+    salvaUltimaPrenotazione({
+      id: risposta.id || "",
+      telefono: payload.telefono
+    });
+
     mostraConferma({
       id: risposta.id || "Registrata",
       data: state.dataSelezionata,
@@ -912,6 +917,24 @@ function aggiornaContatoreNote() {
 /* =========================================================
    UTILITÀ DATI
    ========================================================= */
+
+function salvaUltimaPrenotazione(dati) {
+  if (!dati || !dati.id || !dati.telefono) {
+    return;
+  }
+
+  try {
+    localStorage.setItem(
+      "ultimaPrenotazioneLido",
+      JSON.stringify({
+        id: String(dati.id),
+        telefono: String(dati.telefono)
+      })
+    );
+  } catch (error) {
+    console.warn("Impossibile salvare la prenotazione sul dispositivo:", error);
+  }
+}
 
 function oggiFormatoInput() {
   const oggi = new Date();

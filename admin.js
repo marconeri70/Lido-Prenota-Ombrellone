@@ -6,7 +6,7 @@
   Inserisci qui lo STESSO URL /exec usato nel file app.js.
 */
 const ADMIN_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxImGmbQ-AYdFAgEmyPOSbm1p_2H-C3i7JppvgTiyf7pkRk9U4cvlIkFmYPR4dO0QWgYA/exec",
+  API_URL: "INCOLLA_QUI_L_URL_DELLA_WEB_APP",
   REQUEST_TIMEOUT: 20000
 };
 
