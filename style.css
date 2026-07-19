@@ -1562,3 +1562,79 @@ textarea.invalid:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   V1.2 - BRANDING, REGOLE E CAMPO EMAIL
+   ========================================================= */
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+}
+
+.mobile-label { display: none; }
+.booking-link { background: rgba(255, 255, 255, 0.22); }
+
+.quick-access-card {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 18px 21px;
+  border: 1px solid rgba(8, 124, 167, 0.2);
+  border-radius: var(--radius-medium);
+  background: linear-gradient(135deg, #ffffff, var(--primary-light));
+  box-shadow: var(--shadow-small);
+  gap: 15px;
+}
+
+.quick-access-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 50px;
+  height: 50px;
+  place-items: center;
+  border-radius: 15px;
+  background: #ffffff;
+  font-size: 27px;
+  box-shadow: var(--shadow-small);
+}
+
+.quick-access-content { min-width: 0; flex: 1; }
+.quick-access-content span { display: block; color: var(--text-light); font-size: 0.82rem; }
+.quick-access-content strong { display: block; margin-top: 2px; font-size: 1rem; }
+
+.public-info-box {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  padding: 15px 18px;
+  border: 1px solid rgba(8, 124, 167, 0.2);
+  border-radius: 15px;
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  gap: 10px;
+  box-shadow: var(--shadow-small);
+}
+
+.public-info-box p { font-size: 0.9rem; }
+.date-rules-text { margin-top: 9px; color: var(--text-light); font-size: 0.79rem; }
+.input-help { display: block; margin-top: 5px; color: var(--text-light); font-size: 0.74rem; }
+.modal-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+.modal-actions .primary-button,
+.modal-actions .secondary-button { width: 100%; }
+
+@media (max-width: 760px) {
+  .header-actions { gap: 6px; }
+  .header-actions .admin-link { padding: 8px 10px; font-size: 0.76rem; }
+  .quick-access-card { align-items: flex-start; flex-wrap: wrap; }
+  .quick-access-card .secondary-button { width: 100%; }
+}
+
+@media (max-width: 520px) {
+  .desktop-label { display: none; }
+  .mobile-label { display: inline; }
+  .header-actions .admin-link { min-width: auto; padding: 7px 9px; }
+  .modal-actions { grid-template-columns: 1fr; }
+}

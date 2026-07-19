@@ -1,25 +1,26 @@
 /* =========================================================
-   PRENOTA OMBRELLONE
-   Logica dell'app cliente
+   PRENOTA OMBRELLONE - APP CLIENTE V1.2
    ========================================================= */
 
-/*
-  IMPORTANTE:
-  Sostituisci il valore di API_URL con l'indirizzo della Web App
-  pubblicata da Google Apps Script.
-
-  Esempio:
-  https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxx/exec
-*/
-
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxImGmbQ-AYdFAgEmyPOSbm1p_2H-C3i7JppvgTiyf7pkRk9U4cvlIkFmYPR4dO0QWgYA/exec",
+  API_URL: "INCOLLA_QUI_L_URL_DELLA_WEB_APP",
   REQUEST_TIMEOUT: 20000
 };
 
 const state = {
+  impostazioni: {
+    nomeLido: "Prenota Ombrellone",
+    sottotitolo: "La tua giornata al mare comincia qui",
+    giorniChiusi: [],
+    dateChiuse: [],
+    maxPersone: 6,
+    emailClienteObbligatoria: false,
+    confermaAutomatica: false,
+    minDate: oggiFormatoInput(),
+    maxDate: ""
+  },
   ombrelloni: [],
-  prenotazioni: [],
+  disponibilita: [],
   dataSelezionata: "",
   ombrelloneSelezionato: null,
   toastTimer: null
@@ -29,71 +30,39 @@ const dom = {};
 
 document.addEventListener("DOMContentLoaded", inizializzaApp);
 
-/* =========================================================
-   INIZIALIZZAZIONE
-   ========================================================= */
-
-function inizializzaApp() {
+async function inizializzaApp() {
   recuperaElementiDOM();
-  configuraDataMinima();
   collegaEventi();
   aggiornaContatoreNote();
-
   dom.bookingDate.value = oggiFormatoInput();
+
+  if (apiConfigurata()) {
+    await caricaConfigurazione();
+  } else {
+    applicaConfigurazione();
+  }
 }
 
 function recuperaElementiDOM() {
-  dom.loadingOverlay = document.getElementById("loadingOverlay");
-  dom.loadingText = document.getElementById("loadingText");
+  const ids = [
+    "loadingOverlay", "loadingText", "brandName", "brandSubtitle",
+    "heroMessage", "publicInfoBox", "publicInfoText", "dateRulesText",
+    "footerBrandName", "bookingDate", "loadAvailabilityBtn", "dateMessage",
+    "umbrellaSection", "umbrellaMap", "emptyUmbrellaMessage", "umbrellaMessage",
+    "selectionSummary", "selectedUmbrellaText", "changeUmbrellaBtn",
+    "bookingSection", "bookingForm", "selectedUmbrellaId", "selectedUmbrellaNumber",
+    "customerName", "customerPhone", "customerEmail", "numberOfPeople",
+    "arrivalTime", "bookingNotes", "notesCounter", "privacyConsent",
+    "customerNameError", "customerPhoneError", "customerEmailError",
+    "numberOfPeopleError", "privacyConsentError", "emailRequiredMark",
+    "recapDate", "recapUmbrella", "submitBookingBtn", "submitButtonText",
+    "bookingInformation", "bookingFormMessage", "successModal",
+    "successModalTitle", "successModalMessage", "successBookingId",
+    "successBookingDate", "successUmbrella", "successBookingStatus",
+    "newBookingBtn", "toast", "toastIcon", "toastMessage"
+  ];
 
-  dom.bookingDate = document.getElementById("bookingDate");
-  dom.loadAvailabilityBtn = document.getElementById("loadAvailabilityBtn");
-  dom.dateMessage = document.getElementById("dateMessage");
-
-  dom.umbrellaSection = document.getElementById("umbrellaSection");
-  dom.umbrellaMap = document.getElementById("umbrellaMap");
-  dom.emptyUmbrellaMessage = document.getElementById("emptyUmbrellaMessage");
-  dom.umbrellaMessage = document.getElementById("umbrellaMessage");
-
-  dom.selectionSummary = document.getElementById("selectionSummary");
-  dom.selectedUmbrellaText = document.getElementById("selectedUmbrellaText");
-  dom.changeUmbrellaBtn = document.getElementById("changeUmbrellaBtn");
-
-  dom.bookingSection = document.getElementById("bookingSection");
-  dom.bookingForm = document.getElementById("bookingForm");
-  dom.selectedUmbrellaId = document.getElementById("selectedUmbrellaId");
-  dom.selectedUmbrellaNumber = document.getElementById("selectedUmbrellaNumber");
-
-  dom.customerName = document.getElementById("customerName");
-  dom.customerPhone = document.getElementById("customerPhone");
-  dom.numberOfPeople = document.getElementById("numberOfPeople");
-  dom.arrivalTime = document.getElementById("arrivalTime");
-  dom.bookingNotes = document.getElementById("bookingNotes");
-  dom.notesCounter = document.getElementById("notesCounter");
-  dom.privacyConsent = document.getElementById("privacyConsent");
-
-  dom.customerNameError = document.getElementById("customerNameError");
-  dom.customerPhoneError = document.getElementById("customerPhoneError");
-  dom.numberOfPeopleError = document.getElementById("numberOfPeopleError");
-  dom.privacyConsentError = document.getElementById("privacyConsentError");
-
-  dom.recapDate = document.getElementById("recapDate");
-  dom.recapUmbrella = document.getElementById("recapUmbrella");
-
-  dom.submitBookingBtn = document.getElementById("submitBookingBtn");
-  dom.submitButtonText = document.getElementById("submitButtonText");
-  dom.bookingFormMessage = document.getElementById("bookingFormMessage");
-
-  dom.successModal = document.getElementById("successModal");
-  dom.successBookingId = document.getElementById("successBookingId");
-  dom.successBookingDate = document.getElementById("successBookingDate");
-  dom.successUmbrella = document.getElementById("successUmbrella");
-  dom.successBookingStatus = document.getElementById("successBookingStatus");
-  dom.newBookingBtn = document.getElementById("newBookingBtn");
-
-  dom.toast = document.getElementById("toast");
-  dom.toastIcon = document.getElementById("toastIcon");
-  dom.toastMessage = document.getElementById("toastMessage");
+  ids.forEach(id => { dom[id] = document.getElementById(id); });
 }
 
 function collegaEventi() {
@@ -107,24 +76,18 @@ function collegaEventi() {
 
   dom.changeUmbrellaBtn.addEventListener("click", () => {
     azzeraSelezioneOmbrellone();
-    dom.umbrellaSection.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    dom.umbrellaSection.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   dom.bookingNotes.addEventListener("input", aggiornaContatoreNote);
 
-  dom.customerName.addEventListener("input", () => {
-    rimuoviErroreCampo(dom.customerName, dom.customerNameError);
-  });
-
-  dom.customerPhone.addEventListener("input", () => {
-    rimuoviErroreCampo(dom.customerPhone, dom.customerPhoneError);
-  });
-
-  dom.numberOfPeople.addEventListener("input", () => {
-    rimuoviErroreCampo(dom.numberOfPeople, dom.numberOfPeopleError);
+  [
+    [dom.customerName, dom.customerNameError],
+    [dom.customerPhone, dom.customerPhoneError],
+    [dom.customerEmail, dom.customerEmailError],
+    [dom.numberOfPeople, dom.numberOfPeopleError]
+  ].forEach(([campo, errore]) => {
+    campo.addEventListener("input", () => rimuoviErroreCampo(campo, errore));
   });
 
   dom.privacyConsent.addEventListener("change", () => {
@@ -135,9 +98,7 @@ function collegaEventi() {
   dom.newBookingBtn.addEventListener("click", nuovaPrenotazione);
 
   const backdrop = dom.successModal.querySelector(".modal-backdrop");
-  if (backdrop) {
-    backdrop.addEventListener("click", chiudiModale);
-  }
+  if (backdrop) backdrop.addEventListener("click", chiudiModale);
 
   document.addEventListener("keydown", event => {
     if (event.key === "Escape" && !dom.successModal.classList.contains("hidden")) {
@@ -146,8 +107,72 @@ function collegaEventi() {
   });
 }
 
-function configuraDataMinima() {
-  dom.bookingDate.min = oggiFormatoInput();
+/* =========================================================
+   CONFIGURAZIONE PUBBLICA
+   ========================================================= */
+
+async function caricaConfigurazione() {
+  try {
+    const risposta = await richiestaGet({ action: "configurazionePubblica" });
+    if (risposta.ok && risposta.impostazioni) {
+      state.impostazioni = Object.assign({}, state.impostazioni, risposta.impostazioni);
+    }
+  } catch (error) {
+    console.warn("Configurazione non caricata:", error);
+  } finally {
+    applicaConfigurazione();
+  }
+}
+
+function applicaConfigurazione() {
+  const s = state.impostazioni;
+
+  dom.brandName.textContent = s.nomeLido || "Prenota Ombrellone";
+  dom.footerBrandName.textContent = s.nomeLido || "Prenota Ombrellone";
+  dom.brandSubtitle.textContent = s.sottotitolo || "La tua giornata al mare comincia qui";
+  dom.heroMessage.textContent = s.messaggioHome || "Seleziona la data e scegli un ombrellone libero.";
+  dom.bookingInformation.textContent = s.messaggioInformativo || "La prenotazione non prevede alcun pagamento online.";
+  document.title = `${s.nomeLido || "Prenota Ombrellone"} | Prenotazioni`;
+
+  if (s.messaggioInformativo) {
+    dom.publicInfoText.textContent = s.messaggioInformativo;
+    dom.publicInfoBox.classList.remove("hidden");
+  }
+
+  dom.bookingDate.min = s.minDate || oggiFormatoInput();
+  if (s.maxDate) dom.bookingDate.max = s.maxDate;
+
+  const dataCorrente = dom.bookingDate.value;
+  if (!dataCorrente || dataCorrente < dom.bookingDate.min) {
+    dom.bookingDate.value = dom.bookingDate.min;
+  }
+  if (dom.bookingDate.max && dom.bookingDate.value > dom.bookingDate.max) {
+    dom.bookingDate.value = dom.bookingDate.max;
+  }
+
+  const maxPersone = Math.max(1, Number(s.maxPersone || 6));
+  dom.numberOfPeople.max = String(maxPersone);
+  if (Number(dom.numberOfPeople.value) > maxPersone) dom.numberOfPeople.value = String(maxPersone);
+
+  const emailObbligatoria = Boolean(s.emailClienteObbligatoria);
+  dom.customerEmail.required = emailObbligatoria;
+  dom.emailRequiredMark.classList.toggle("hidden", !emailObbligatoria);
+
+  dom.dateRulesText.textContent = costruisciTestoRegole();
+}
+
+function costruisciTestoRegole() {
+  const s = state.impostazioni;
+  const parti = [];
+
+  if (s.minDate && s.maxDate) {
+    parti.push(`Prenotabile dal ${formattaDataItaliana(s.minDate)} al ${formattaDataItaliana(s.maxDate)}`);
+  }
+
+  const chiusi = (s.giorniChiusi || []).map(nomeGiorno).filter(Boolean);
+  if (chiusi.length) parti.push(`Chiuso: ${chiusi.join(", ")}`);
+
+  return parti.join(" · ");
 }
 
 /* =========================================================
@@ -156,36 +181,18 @@ function configuraDataMinima() {
 
 async function caricaDisponibilita() {
   const data = dom.bookingDate.value;
-
   pulisciMessaggio(dom.dateMessage);
   pulisciMessaggio(dom.umbrellaMessage);
   pulisciMessaggio(dom.bookingFormMessage);
 
-  if (!data) {
-    mostraMessaggio(dom.dateMessage, "Seleziona una data.", "error");
-    dom.bookingDate.focus();
-    return;
-  }
-
-  if (data < oggiFormatoInput()) {
-    mostraMessaggio(
-      dom.dateMessage,
-      "Non puoi prenotare una data già trascorsa.",
-      "error"
-    );
+  const erroreLocale = validaDataLocale(data);
+  if (erroreLocale) {
+    mostraMessaggio(dom.dateMessage, erroreLocale, "error");
     return;
   }
 
   if (!apiConfigurata()) {
-    mostraMessaggio(
-      dom.dateMessage,
-      "Devi prima inserire in app.js l’URL della Web App di Google Apps Script.",
-      "error"
-    );
-    mostraToast(
-      "Inserisci l’URL di Google Apps Script nella costante CONFIG.API_URL.",
-      "warning"
-    );
+    mostraMessaggio(dom.dateMessage, "Inserisci in app.js l’URL della Web App di Google Apps Script.", "error");
     return;
   }
 
@@ -194,69 +201,38 @@ async function caricaDisponibilita() {
   mostraCaricamento("Controllo disponibilità...");
 
   try {
-    /*
-      L'app pubblica riceve soltanto l'ID dell'ombrellone e lo stato.
-      Nomi e numeri di telefono restano protetti nell'Area lido.
-    */
-    const [rispostaOmbrelloni, rispostaDisponibilita] = await Promise.all([
+    const [ombrelloniResponse, disponibilitaResponse] = await Promise.all([
       richiestaGet({ action: "ombrelloni" }),
-      richiestaGet({
-        action: "disponibilita",
-        data: state.dataSelezionata
-      })
+      richiestaGet({ action: "disponibilita", data })
     ]);
 
-    if (!rispostaOmbrelloni.ok) {
-      throw new Error(
-        rispostaOmbrelloni.error || "Impossibile caricare gli ombrelloni."
-      );
-    }
+    if (!ombrelloniResponse.ok) throw new Error(ombrelloniResponse.error || "Impossibile caricare gli ombrelloni.");
+    if (!disponibilitaResponse.ok) throw new Error(disponibilitaResponse.error || "Impossibile caricare la disponibilità.");
 
-    if (!rispostaDisponibilita.ok) {
-      throw new Error(
-        rispostaDisponibilita.error || "Impossibile caricare la disponibilità."
-      );
-    }
-
-    state.ombrelloni = Array.isArray(rispostaOmbrelloni.ombrelloni)
-      ? rispostaOmbrelloni.ombrelloni
-      : [];
-
-    state.prenotazioni = Array.isArray(rispostaDisponibilita.disponibilita)
-      ? rispostaDisponibilita.disponibilita
-      : [];
+    state.ombrelloni = Array.isArray(ombrelloniResponse.ombrelloni) ? ombrelloniResponse.ombrelloni : [];
+    state.disponibilita = Array.isArray(disponibilitaResponse.disponibilita) ? disponibilitaResponse.disponibilita : [];
 
     renderizzaMappa();
     dom.umbrellaSection.classList.remove("hidden");
-
-    mostraMessaggio(
-      dom.dateMessage,
-      `Disponibilità aggiornata per ${formattaDataItaliana(data)}.`,
-      "success"
-    );
-
-    dom.umbrellaSection.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
+    mostraMessaggio(dom.dateMessage, `Disponibilità aggiornata per ${formattaDataItaliana(data)}.`, "success");
+    dom.umbrellaSection.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
-    console.error("Errore caricamento disponibilità:", error);
-
     nascondiRisultati();
-
-    mostraMessaggio(
-      dom.dateMessage,
-      error.message || "Errore durante il caricamento della disponibilità.",
-      "error"
-    );
-
-    mostraToast(
-      "Non è stato possibile collegarsi al database del lido.",
-      "error"
-    );
+    mostraMessaggio(dom.dateMessage, error.message || "Errore durante il caricamento.", "error");
+    mostraToast("Non è stato possibile collegarsi al database del lido.", "error");
   } finally {
     nascondiCaricamento();
   }
+}
+
+function validaDataLocale(data) {
+  if (!data) return "Seleziona una data.";
+  const s = state.impostazioni;
+  if (s.minDate && data < s.minDate) return "La data selezionata non rispetta l’anticipo minimo.";
+  if (s.maxDate && data > s.maxDate) return "La data selezionata supera il limite di prenotazione.";
+  if ((s.dateChiuse || []).includes(data)) return "Il lido è chiuso eccezionalmente in questa data.";
+  if ((s.giorniChiusi || []).map(String).includes(String(giornoSettimanaIso(data)))) return "Il lido è chiuso in questo giorno della settimana.";
+  return "";
 }
 
 function renderizzaMappa() {
@@ -271,31 +247,11 @@ function renderizzaMappa() {
   }
 
   const ordinati = [...state.ombrelloni].sort((a, b) => {
-    const zonaA = String(a.zona || "");
-    const zonaB = String(b.zona || "");
-
-    if (zonaA !== zonaB) {
-      return zonaA.localeCompare(zonaB, "it", {
-        numeric: true,
-        sensitivity: "base"
-      });
-    }
-
-    const filaA = valoreOrdinabile(a.fila);
-    const filaB = valoreOrdinabile(b.fila);
-
-    if (filaA !== filaB) {
-      return filaA.localeCompare(filaB, "it", {
-        numeric: true,
-        sensitivity: "base"
-      });
-    }
-
-    return String(a.numero || a.id || "").localeCompare(
-      String(b.numero || b.id || ""),
-      "it",
-      { numeric: true, sensitivity: "base" }
-    );
+    const zona = String(a.zona || "").localeCompare(String(b.zona || ""), "it", { numeric: true });
+    if (zona) return zona;
+    const fila = String(a.fila || "").localeCompare(String(b.fila || ""), "it", { numeric: true });
+    if (fila) return fila;
+    return String(a.numero || a.id || "").localeCompare(String(b.numero || b.id || ""), "it", { numeric: true });
   });
 
   let ultimaZona = null;
@@ -309,214 +265,126 @@ function renderizzaMappa() {
     if (zona !== ultimaZona) {
       ultimaZona = zona;
       ultimaFila = null;
-
-      const titoloZona = document.createElement("div");
-      titoloZona.className = "zone-title";
-      titoloZona.textContent = zona;
-      dom.umbrellaMap.appendChild(titoloZona);
+      const titolo = document.createElement("div");
+      titolo.className = "zone-title";
+      titolo.textContent = zona;
+      dom.umbrellaMap.appendChild(titolo);
     }
 
     if (fila && fila !== ultimaFila) {
       ultimaFila = fila;
-
-      const titoloFila = document.createElement("div");
-      titoloFila.className = "umbrella-row-title";
-      titoloFila.textContent = `Fila ${fila}`;
-      dom.umbrellaMap.appendChild(titoloFila);
+      const titolo = document.createElement("div");
+      titolo.className = "umbrella-row-title";
+      titolo.textContent = `Fila ${fila}`;
+      dom.umbrellaMap.appendChild(titolo);
     }
 
     const stato = determinaStatoOmbrellone(ombrellone);
-
-    if (stato === "available") {
-      disponibili += 1;
-    }
-
-    dom.umbrellaMap.appendChild(
-      creaPulsanteOmbrellone(ombrellone, stato)
-    );
+    if (stato === "available") disponibili++;
+    dom.umbrellaMap.appendChild(creaPulsanteOmbrellone(ombrellone, stato));
   });
 
   if (disponibili === 0) {
-    mostraMessaggio(
-      dom.umbrellaMessage,
-      "Per questa data non ci sono ombrelloni liberi.",
-      "warning"
-    );
+    mostraMessaggio(dom.umbrellaMessage, "Per questa data non ci sono ombrelloni liberi.", "warning");
   } else {
-    mostraMessaggio(
-      dom.umbrellaMessage,
-      `${disponibili} ombrellon${disponibili === 1 ? "e libero" : "i liberi"}.`,
-      "success"
-    );
+    mostraMessaggio(dom.umbrellaMessage, `${disponibili} ombrellon${disponibili === 1 ? "e libero" : "i liberi"}.`, "success");
   }
 }
 
 function creaPulsanteOmbrellone(ombrellone, stato) {
-  const pulsante = document.createElement("button");
+  const button = document.createElement("button");
   const numero = String(ombrellone.numero || ombrellone.id || "—");
   const fila = String(ombrellone.fila || "").trim();
+  const dettaglio = trovaDisponibilitaOmbrellone(ombrellone);
 
-  pulsante.type = "button";
-  pulsante.className = `umbrella ${stato}`;
-  pulsante.dataset.id = String(ombrellone.id ?? "");
-  pulsante.dataset.numero = numero;
+  button.type = "button";
+  button.className = `umbrella ${stato}`;
+  button.dataset.id = String(ombrellone.id || "");
+  button.setAttribute("aria-label", `Ombrellone ${numero}${fila ? `, fila ${fila}` : ""}: ${descrizioneStato(stato)}`);
 
-  const etichettaStato = descrizioneStato(stato);
+  const numeroEl = document.createElement("span");
+  numeroEl.className = "umbrella-number";
+  numeroEl.textContent = `N. ${numero}`;
 
-  pulsante.setAttribute(
-    "aria-label",
-    `Ombrellone ${numero}${fila ? `, fila ${fila}` : ""}: ${etichettaStato}`
-  );
+  const infoEl = document.createElement("span");
+  infoEl.className = "umbrella-info";
+  infoEl.textContent = dettaglio && dettaglio.motivo ? dettaglio.motivo : descrizioneStato(stato);
 
-  const numeroElemento = document.createElement("span");
-  numeroElemento.className = "umbrella-number";
-  numeroElemento.textContent = `N. ${numero}`;
-
-  const infoElemento = document.createElement("span");
-  infoElemento.className = "umbrella-info";
-  infoElemento.textContent = etichettaStato;
-
-  pulsante.append(numeroElemento, infoElemento);
+  button.append(numeroEl, infoEl);
 
   if (stato === "available") {
-    pulsante.addEventListener("click", () => {
-      selezionaOmbrellone(ombrellone, pulsante);
-    });
+    button.addEventListener("click", () => selezionaOmbrellone(ombrellone, button));
   } else {
-    pulsante.disabled = true;
-    pulsante.setAttribute("aria-disabled", "true");
+    button.disabled = true;
   }
 
-  return pulsante;
+  return button;
 }
 
 function determinaStatoOmbrellone(ombrellone) {
-  const statoAnagrafica = normalizzaTesto(ombrellone.stato);
+  if (normalizzaTesto(ombrellone.stato) !== "attivo") return "blocked";
 
-  const statiDisponibili = [
-    "",
-    "attivo",
-    "attiva",
-    "libero",
-    "libera",
-    "disponibile"
-  ];
+  const dettaglio = trovaDisponibilitaOmbrellone(ombrellone);
+  if (!dettaglio) return "available";
 
-  if (!statiDisponibili.includes(statoAnagrafica)) {
-    return "blocked";
-  }
-
-  const prenotazione = trovaPrenotazioneOmbrellone(ombrellone);
-
-  if (!prenotazione) {
-    return "available";
-  }
-
-  const statoPrenotazione = normalizzaTesto(prenotazione.stato);
-
-  if (
-    statoPrenotazione === "in_attesa" ||
-    statoPrenotazione === "in attesa" ||
-    statoPrenotazione === "pending"
-  ) {
-    return "pending";
-  }
-
-  if (
-    statoPrenotazione === "confermata" ||
-    statoPrenotazione === "confermato" ||
-    statoPrenotazione === "prenotata" ||
-    statoPrenotazione === "prenotato"
-  ) {
-    return "occupied";
-  }
-
+  const stato = normalizzaTesto(dettaglio.stato);
+  if (stato === "in_attesa") return "pending";
+  if (stato === "confermata") return "occupied";
+  if (stato === "bloccato_data") return "blocked";
   return "occupied";
 }
 
-function trovaPrenotazioneOmbrellone(ombrellone) {
-  const id = String(ombrellone.id ?? "").trim();
-  const numero = String(ombrellone.numero ?? "").trim();
-
-  return state.prenotazioni.find(prenotazione => {
-    const valore = String(prenotazione.ombrellone ?? "").trim();
+function trovaDisponibilitaOmbrellone(ombrellone) {
+  const id = String(ombrellone.id || "").trim();
+  const numero = String(ombrellone.numero || "").trim();
+  return state.disponibilita.find(item => {
+    const valore = String(item.ombrellone || "").trim();
     return valore === id || valore === numero;
   });
 }
 
 /* =========================================================
-   SELEZIONE OMBRELLONE
+   SELEZIONE E MODULO
    ========================================================= */
 
-function selezionaOmbrellone(ombrellone, pulsante) {
-  document.querySelectorAll(".umbrella.selected").forEach(elemento => {
-    elemento.classList.remove("selected");
-    elemento.classList.add("available");
-
-    const info = elemento.querySelector(".umbrella-info");
-    if (info) {
-      info.textContent = "Libero";
-    }
+function selezionaOmbrellone(ombrellone, button) {
+  document.querySelectorAll(".umbrella.selected").forEach(el => {
+    el.classList.remove("selected");
+    el.classList.add("available");
+    const info = el.querySelector(".umbrella-info");
+    if (info) info.textContent = "Libero";
   });
 
-  pulsante.classList.remove("available");
-  pulsante.classList.add("selected");
-
-  const info = pulsante.querySelector(".umbrella-info");
-  if (info) {
-    info.textContent = "Selezionato";
-  }
+  button.classList.remove("available");
+  button.classList.add("selected");
+  const info = button.querySelector(".umbrella-info");
+  if (info) info.textContent = "Selezionato";
 
   state.ombrelloneSelezionato = ombrellone;
-
   const numero = String(ombrellone.numero || ombrellone.id || "—");
-  const fila = String(ombrellone.fila || "").trim();
-  const zona = String(ombrellone.zona || "").trim();
-
-  dom.selectedUmbrellaId.value = String(ombrellone.id ?? numero);
-  dom.selectedUmbrellaNumber.value = numero;
-
   const dettagli = [
     `Ombrellone ${numero}`,
-    fila ? `fila ${fila}` : "",
-    zona
+    ombrellone.fila ? `fila ${ombrellone.fila}` : "",
+    ombrellone.zona || ""
   ].filter(Boolean);
 
+  dom.selectedUmbrellaId.value = String(ombrellone.id || numero);
+  dom.selectedUmbrellaNumber.value = numero;
   dom.selectedUmbrellaText.textContent = dettagli.join(" · ");
   dom.recapDate.textContent = formattaDataItaliana(state.dataSelezionata);
   dom.recapUmbrella.textContent = dettagli.join(" · ");
-
   dom.selectionSummary.classList.remove("hidden");
   dom.bookingSection.classList.remove("hidden");
 
-  pulisciMessaggio(dom.bookingFormMessage);
-
-  setTimeout(() => {
-    dom.bookingSection.scrollIntoView({
-      behavior: "smooth",
-      block: "start"
-    });
-  }, 100);
+  setTimeout(() => dom.bookingSection.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
 }
 
 function azzeraSelezioneOmbrellone() {
   state.ombrelloneSelezionato = null;
-
-  document.querySelectorAll(".umbrella.selected").forEach(elemento => {
-    elemento.classList.remove("selected");
-    elemento.classList.add("available");
-
-    const info = elemento.querySelector(".umbrella-info");
-    if (info) {
-      info.textContent = "Libero";
-    }
-  });
-
   dom.selectedUmbrellaId.value = "";
   dom.selectedUmbrellaNumber.value = "";
   dom.selectedUmbrellaText.textContent = "Nessun ombrellone";
   dom.recapUmbrella.textContent = "—";
-
   dom.selectionSummary.classList.add("hidden");
   dom.bookingSection.classList.add("hidden");
 }
@@ -528,63 +396,36 @@ function nascondiRisultati() {
   dom.umbrellaMap.innerHTML = "";
 }
 
-/* =========================================================
-   INVIO PRENOTAZIONE
-   ========================================================= */
-
 async function inviaPrenotazione(event) {
   event.preventDefault();
-
   pulisciMessaggio(dom.bookingFormMessage);
 
   if (!state.ombrelloneSelezionato) {
-    mostraMessaggio(
-      dom.bookingFormMessage,
-      "Seleziona prima un ombrellone libero.",
-      "error"
-    );
+    mostraMessaggio(dom.bookingFormMessage, "Seleziona prima un ombrellone libero.", "error");
     return;
   }
 
   if (!validaModulo()) {
-    mostraMessaggio(
-      dom.bookingFormMessage,
-      "Controlla i campi evidenziati.",
-      "error"
-    );
+    mostraMessaggio(dom.bookingFormMessage, "Controlla i campi evidenziati.", "error");
     return;
   }
 
-  const numeroOmbrellone = String(
-    state.ombrelloneSelezionato.numero ||
-    state.ombrelloneSelezionato.id ||
-    ""
-  );
-
-  const identificativoOmbrellone = String(
-    state.ombrelloneSelezionato.id || numeroOmbrellone
-  );
-
-  const noteUtente = dom.bookingNotes.value.trim();
-  const orario = dom.arrivalTime.value;
-
-  const partiNota = [];
-  if (orario) {
-    partiNota.push(`Arrivo previsto: ${orario}`);
-  }
-  if (noteUtente) {
-    partiNota.push(noteUtente);
-  }
+  const numeroOmbrellone = String(state.ombrelloneSelezionato.numero || state.ombrelloneSelezionato.id || "");
+  const identificativo = String(state.ombrelloneSelezionato.id || numeroOmbrellone);
+  const note = [];
+  if (dom.arrivalTime.value) note.push(`Arrivo previsto: ${dom.arrivalTime.value}`);
+  if (dom.bookingNotes.value.trim()) note.push(dom.bookingNotes.value.trim());
 
   const payload = {
     action: "prenota",
     data: state.dataSelezionata,
-    ombrellone: identificativoOmbrellone,
+    ombrellone: identificativo,
     numeroOmbrellone,
     nome: dom.customerName.value.trim(),
     telefono: dom.customerPhone.value.trim(),
+    email: dom.customerEmail.value.trim(),
     persone: Number(dom.numberOfPeople.value),
-    note: partiNota.join(" - ")
+    note: note.join(" - ")
   };
 
   impostaInvioInCorso(true);
@@ -592,44 +433,22 @@ async function inviaPrenotazione(event) {
 
   try {
     const risposta = await richiestaPost(payload);
+    if (!risposta.ok) throw new Error(risposta.error || "Prenotazione non registrata.");
 
-    if (!risposta.ok) {
-      throw new Error(
-        risposta.error || "Non è stato possibile registrare la prenotazione."
-      );
-    }
+    salvaUltimaPrenotazione({ id: risposta.id, telefono: payload.telefono });
 
-    salvaUltimaPrenotazione({
-      id: risposta.id || "",
-      telefono: payload.telefono
-    });
-
+    const stato = normalizzaTesto(risposta.stato || "in_attesa");
     mostraConferma({
       id: risposta.id || "Registrata",
       data: state.dataSelezionata,
       numeroOmbrellone,
-      stato: "In attesa"
+      stato
     });
 
-    mostraToast("Prenotazione inviata correttamente.", "success");
+    mostraToast(risposta.message || "Prenotazione inviata correttamente.", "success");
   } catch (error) {
-    console.error("Errore invio prenotazione:", error);
-
-    mostraMessaggio(
-      dom.bookingFormMessage,
-      error.message || "Errore durante l’invio della prenotazione.",
-      "error"
-    );
-
-    mostraToast(
-      error.message || "Prenotazione non inviata.",
-      "error"
-    );
-
-    /*
-      Ricarica la mappa: l'ombrellone potrebbe essere stato prenotato
-      da un altro cliente pochi istanti prima.
-    */
+    mostraMessaggio(dom.bookingFormMessage, error.message || "Errore durante l’invio.", "error");
+    mostraToast(error.message || "Prenotazione non inviata.", "error");
     await aggiornaDisponibilitaSenzaScorrimento();
   } finally {
     nascondiCaricamento();
@@ -639,57 +458,42 @@ async function inviaPrenotazione(event) {
 
 function validaModulo() {
   let valido = true;
-
-  rimuoviErroreCampo(dom.customerName, dom.customerNameError);
-  rimuoviErroreCampo(dom.customerPhone, dom.customerPhoneError);
-  rimuoviErroreCampo(dom.numberOfPeople, dom.numberOfPeopleError);
+  const campi = [
+    [dom.customerName, dom.customerNameError],
+    [dom.customerPhone, dom.customerPhoneError],
+    [dom.customerEmail, dom.customerEmailError],
+    [dom.numberOfPeople, dom.numberOfPeopleError]
+  ];
+  campi.forEach(([c, e]) => rimuoviErroreCampo(c, e));
   dom.privacyConsentError.textContent = "";
 
-  const nome = dom.customerName.value.trim();
-
-  if (nome.length < 2) {
-    mostraErroreCampo(
-      dom.customerName,
-      dom.customerNameError,
-      "Inserisci nome e cognome."
-    );
+  if (dom.customerName.value.trim().length < 2) {
+    mostraErroreCampo(dom.customerName, dom.customerNameError, "Inserisci nome e cognome.");
     valido = false;
   }
 
-  const telefono = dom.customerPhone.value.trim();
-  const soloNumeri = telefono.replace(/\D/g, "");
+  const telefono = dom.customerPhone.value.replace(/\D/g, "");
+  if (telefono.length < 7 || telefono.length > 15) {
+    mostraErroreCampo(dom.customerPhone, dom.customerPhoneError, "Inserisci un numero di telefono valido.");
+    valido = false;
+  }
 
-  if (soloNumeri.length < 7 || soloNumeri.length > 15) {
-    mostraErroreCampo(
-      dom.customerPhone,
-      dom.customerPhoneError,
-      "Inserisci un numero di telefono valido."
-    );
+  const email = dom.customerEmail.value.trim();
+  if ((state.impostazioni.emailClienteObbligatoria || email) && !emailValida(email)) {
+    mostraErroreCampo(dom.customerEmail, dom.customerEmailError, "Inserisci un indirizzo email valido.");
     valido = false;
   }
 
   const persone = Number(dom.numberOfPeople.value);
-
-  if (!Number.isInteger(persone) || persone < 1 || persone > 20) {
-    mostraErroreCampo(
-      dom.numberOfPeople,
-      dom.numberOfPeopleError,
-      "Inserisci un numero da 1 a 20."
-    );
+  const max = Math.max(1, Number(state.impostazioni.maxPersone || 6));
+  if (!Number.isInteger(persone) || persone < 1 || persone > max) {
+    mostraErroreCampo(dom.numberOfPeople, dom.numberOfPeopleError, `Inserisci un numero da 1 a ${max}.`);
     valido = false;
   }
 
   if (!dom.privacyConsent.checked) {
-    dom.privacyConsentError.textContent =
-      "Devi accettare l’utilizzo dei dati per la prenotazione.";
+    dom.privacyConsentError.textContent = "Devi accettare l’utilizzo dei dati per la prenotazione.";
     valido = false;
-  }
-
-  if (!valido) {
-    const primoCampoNonValido = dom.bookingForm.querySelector(".invalid");
-    if (primoCampoNonValido) {
-      primoCampoNonValido.focus();
-    }
   }
 
   return valido;
@@ -709,24 +513,25 @@ function rimuoviErroreCampo(campo, elementoErrore) {
 
 function impostaInvioInCorso(inCorso) {
   dom.submitBookingBtn.disabled = inCorso;
-  dom.submitButtonText.textContent = inCorso
-    ? "Invio in corso..."
-    : "Invia prenotazione";
+  dom.submitButtonText.textContent = inCorso ? "Invio in corso..." : "Invia prenotazione";
 }
 
 /* =========================================================
-   MODALE E NUOVA PRENOTAZIONE
+   MODALE E AGGIORNAMENTO
    ========================================================= */
 
 function mostraConferma(dati) {
+  const confermata = dati.stato === "confermata";
+  dom.successModalTitle.textContent = confermata ? "Prenotazione confermata" : "Prenotazione inviata";
+  dom.successModalMessage.textContent = confermata
+    ? "La prenotazione è stata confermata automaticamente dal lido."
+    : "La richiesta è stata registrata ed è in attesa della conferma del lido.";
   dom.successBookingId.textContent = String(dati.id);
   dom.successBookingDate.textContent = formattaDataItaliana(dati.data);
   dom.successUmbrella.textContent = `N. ${dati.numeroOmbrellone}`;
-  dom.successBookingStatus.textContent = dati.stato;
-
+  dom.successBookingStatus.textContent = confermata ? "Confermata" : "In attesa";
   dom.successModal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
-
   dom.newBookingBtn.focus();
 }
 
@@ -737,88 +542,49 @@ function chiudiModale() {
 
 async function nuovaPrenotazione() {
   chiudiModale();
-
   dom.bookingForm.reset();
   dom.numberOfPeople.value = "2";
   aggiornaContatoreNote();
-
   azzeraSelezioneOmbrellone();
-
-  if (state.dataSelezionata) {
-    await aggiornaDisponibilitaSenzaScorrimento();
-  }
-
-  dom.umbrellaSection.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
+  if (state.dataSelezionata) await aggiornaDisponibilitaSenzaScorrimento();
+  dom.umbrellaSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function aggiornaDisponibilitaSenzaScorrimento() {
-  if (!state.dataSelezionata || !apiConfigurata()) {
-    return;
-  }
-
+  if (!state.dataSelezionata || !apiConfigurata()) return;
   try {
-    const risposta = await richiestaGet({
-      action: "disponibilita",
-      data: state.dataSelezionata
-    });
-
-    if (!risposta.ok) {
-      return;
-    }
-
-    state.prenotazioni = Array.isArray(risposta.disponibilita)
-      ? risposta.disponibilita
-      : [];
-
+    const risposta = await richiestaGet({ action: "disponibilita", data: state.dataSelezionata });
+    if (!risposta.ok) return;
+    state.disponibilita = Array.isArray(risposta.disponibilita) ? risposta.disponibilita : [];
     azzeraSelezioneOmbrellone();
     renderizzaMappa();
     dom.umbrellaSection.classList.remove("hidden");
   } catch (error) {
-    console.warn("Aggiornamento disponibilità non riuscito:", error);
+    console.warn(error);
   }
 }
 
 /* =========================================================
-   COMUNICAZIONE CON GOOGLE APPS SCRIPT
+   RETE
    ========================================================= */
 
 function apiConfigurata() {
-  return (
-    typeof CONFIG.API_URL === "string" &&
+  return typeof CONFIG.API_URL === "string" &&
     CONFIG.API_URL.startsWith("https://script.google.com/macros/s/") &&
-    CONFIG.API_URL.endsWith("/exec")
-  );
+    CONFIG.API_URL.endsWith("/exec");
 }
 
 async function richiestaGet(parametri) {
   const url = new URL(CONFIG.API_URL);
-
-  Object.entries(parametri).forEach(([chiave, valore]) => {
-    url.searchParams.set(chiave, String(valore));
-  });
-
+  Object.entries(parametri).forEach(([k, v]) => url.searchParams.set(k, String(v)));
   url.searchParams.set("_", Date.now().toString());
-
-  return eseguiRichiesta(url.toString(), {
-    method: "GET",
-    cache: "no-store",
-    redirect: "follow"
-  });
+  return eseguiRichiesta(url.toString(), { method: "GET", cache: "no-store", redirect: "follow" });
 }
 
 async function richiestaPost(dati) {
-  /*
-    text/plain evita una richiesta preliminare CORS "preflight",
-    che può creare problemi con le Web App di Google Apps Script.
-  */
   return eseguiRichiesta(CONFIG.API_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(dati),
     cache: "no-store",
     redirect: "follow"
@@ -827,36 +593,15 @@ async function richiestaPost(dati) {
 
 async function eseguiRichiesta(url, opzioni) {
   const controller = new AbortController();
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, CONFIG.REQUEST_TIMEOUT);
-
+  const timer = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT);
   try {
-    const risposta = await fetch(url, {
-      ...opzioni,
-      signal: controller.signal
-    });
-
+    const risposta = await fetch(url, { ...opzioni, signal: controller.signal });
     const testo = await risposta.text();
-
-    if (!risposta.ok) {
-      throw new Error(`Errore del server (${risposta.status}).`);
-    }
-
-    try {
-      return JSON.parse(testo);
-    } catch {
-      console.error("Risposta non JSON:", testo);
-
-      throw new Error(
-        "Il server non ha restituito dati validi. Controlla l’URL e la pubblicazione della Web App."
-      );
-    }
+    if (!risposta.ok) throw new Error(`Errore del server (${risposta.status}).`);
+    try { return JSON.parse(testo); }
+    catch { throw new Error("Il server non ha restituito dati validi."); }
   } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error("Il collegamento al server ha impiegato troppo tempo.");
-    }
-
+    if (error.name === "AbortError") throw new Error("Il collegamento al server ha impiegato troppo tempo.");
     throw error;
   } finally {
     clearTimeout(timer);
@@ -864,7 +609,7 @@ async function eseguiRichiesta(url, opzioni) {
 }
 
 /* =========================================================
-   UTILITÀ INTERFACCIA
+   UTILITÀ INTERFACCIA E DATI
    ========================================================= */
 
 function mostraCaricamento(testo = "Caricamento...") {
@@ -872,152 +617,59 @@ function mostraCaricamento(testo = "Caricamento...") {
   dom.loadingOverlay.classList.remove("hidden");
 }
 
-function nascondiCaricamento() {
-  dom.loadingOverlay.classList.add("hidden");
-}
+function nascondiCaricamento() { dom.loadingOverlay.classList.add("hidden"); }
 
 function mostraMessaggio(elemento, testo, tipo = "") {
   elemento.textContent = testo;
   elemento.classList.remove("success", "error", "warning");
-
-  if (tipo) {
-    elemento.classList.add(tipo);
-  }
+  if (tipo) elemento.classList.add(tipo);
 }
 
-function pulisciMessaggio(elemento) {
-  mostraMessaggio(elemento, "");
-}
+function pulisciMessaggio(elemento) { mostraMessaggio(elemento, ""); }
 
 function mostraToast(messaggio, tipo = "info") {
   clearTimeout(state.toastTimer);
-
   dom.toast.classList.remove("hidden", "success", "error", "warning");
   dom.toast.classList.add(tipo);
-
-  const icone = {
-    success: "✅",
-    error: "❌",
-    warning: "⚠️",
-    info: "ℹ️"
-  };
-
-  dom.toastIcon.textContent = icone[tipo] || icone.info;
+  dom.toastIcon.textContent = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" }[tipo] || "ℹ️";
   dom.toastMessage.textContent = messaggio;
-
-  state.toastTimer = setTimeout(() => {
-    dom.toast.classList.add("hidden");
-  }, 4500);
+  state.toastTimer = setTimeout(() => dom.toast.classList.add("hidden"), 4500);
 }
 
-function aggiornaContatoreNote() {
-  dom.notesCounter.textContent = String(dom.bookingNotes.value.length);
-}
-
-/* =========================================================
-   UTILITÀ DATI
-   ========================================================= */
+function aggiornaContatoreNote() { dom.notesCounter.textContent = String(dom.bookingNotes.value.length); }
 
 function salvaUltimaPrenotazione(dati) {
-  if (!dati || !dati.id || !dati.telefono) {
-    return;
-  }
-
+  if (!dati || !dati.id || !dati.telefono) return;
   try {
-    localStorage.setItem(
-      "ultimaPrenotazioneLido",
-      JSON.stringify({
-        id: String(dati.id),
-        telefono: String(dati.telefono)
-      })
-    );
-  } catch (error) {
-    console.warn("Impossibile salvare la prenotazione sul dispositivo:", error);
-  }
+    localStorage.setItem("ultimaPrenotazioneLido", JSON.stringify({ id: String(dati.id), telefono: String(dati.telefono) }));
+  } catch (error) { console.warn(error); }
 }
 
 function oggiFormatoInput() {
-  const oggi = new Date();
-  const anno = oggi.getFullYear();
-  const mese = String(oggi.getMonth() + 1).padStart(2, "0");
-  const giorno = String(oggi.getDate()).padStart(2, "0");
-
-  return `${anno}-${mese}-${giorno}`;
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
 }
 
-function formattaDataItaliana(valore) {
-  const dataNormalizzata = normalizzaData(valore);
-
-  if (!dataNormalizzata) {
-    return "—";
-  }
-
-  const [anno, mese, giorno] = dataNormalizzata.split("-");
-
-  return `${giorno}/${mese}/${anno}`;
+function formattaDataItaliana(value) {
+  const m = String(value || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : (value || "—");
 }
 
-function normalizzaData(valore) {
-  if (!valore) {
-    return "";
-  }
-
-  if (valore instanceof Date && !Number.isNaN(valore.getTime())) {
-    return [
-      valore.getFullYear(),
-      String(valore.getMonth() + 1).padStart(2, "0"),
-      String(valore.getDate()).padStart(2, "0")
-    ].join("-");
-  }
-
-  const testo = String(valore).trim();
-
-  const formatoIso = testo.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (formatoIso) {
-    return `${formatoIso[1]}-${formatoIso[2]}-${formatoIso[3]}`;
-  }
-
-  const formatoItaliano = testo.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (formatoItaliano) {
-    const giorno = formatoItaliano[1].padStart(2, "0");
-    const mese = formatoItaliano[2].padStart(2, "0");
-    const anno = formatoItaliano[3];
-
-    return `${anno}-${mese}-${giorno}`;
-  }
-
-  const data = new Date(testo);
-
-  if (!Number.isNaN(data.getTime())) {
-    return [
-      data.getFullYear(),
-      String(data.getMonth() + 1).padStart(2, "0"),
-      String(data.getDate()).padStart(2, "0")
-    ].join("-");
-  }
-
-  return "";
+function giornoSettimanaIso(value) {
+  const p = String(value).split("-").map(Number);
+  return new Date(p[0], p[1] - 1, p[2]).getDay();
 }
 
-function normalizzaTesto(valore) {
-  return String(valore ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/-/g, "_");
+function nomeGiorno(value) {
+  return ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"][Number(value)] || "";
 }
 
-function valoreOrdinabile(valore) {
-  return String(valore ?? "");
+function normalizzaTesto(value) {
+  return String(value || "").trim().toLowerCase().replace(/-/g, "_").replace(/\s+/g, "_");
 }
 
 function descrizioneStato(stato) {
-  const descrizioni = {
-    available: "Libero",
-    selected: "Selezionato",
-    pending: "In attesa",
-    occupied: "Prenotato",
-    blocked: "Non disponibile"
-  };
-
-  return descrizioni[stato] || "Non disponibile";
+  return { available: "Libero", selected: "Selezionato", pending: "In attesa", occupied: "Prenotato", blocked: "Non disponibile" }[stato] || "Non disponibile";
 }
+
+function emailValida(value) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim()); }

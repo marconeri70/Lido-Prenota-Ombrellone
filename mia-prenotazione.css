@@ -285,3 +285,32 @@
     grid-template-columns: 1fr;
   }
 }
+
+.customer-contact-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 15px 17px;
+  border: 1px solid rgba(19, 138, 69, 0.25);
+  border-radius: 14px;
+  background: #e8f8ef;
+  gap: 14px;
+}
+.customer-contact-box p { color: var(--text-light); font-size: 0.84rem; }
+.whatsapp-contact-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 9px 15px;
+  border-radius: 12px;
+  background: #138a45;
+  color: #fff;
+  font-weight: 850;
+  white-space: nowrap;
+}
+@media (max-width: 620px) {
+  .customer-contact-box { align-items: flex-start; flex-direction: column; }
+  .whatsapp-contact-button { width: 100%; }
+}

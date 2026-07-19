@@ -2,30 +2,16 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1, viewport-fit=cover"
-  >
-
-  <meta
-    name="description"
-    content="Prenota il tuo ombrellone al lido in modo semplice e veloce."
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Prenota il tuo ombrellone al lido in modo semplice e veloce.">
   <meta name="theme-color" content="#087ca7">
-
   <title>Prenota Ombrellone</title>
-
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.json">
-
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
-
 <body>
-
   <div id="loadingOverlay" class="loading-overlay hidden" aria-live="polite">
     <div class="loading-box">
       <div class="spinner"></div>
@@ -35,75 +21,56 @@
 
   <header class="main-header">
     <div class="header-content">
-
       <div class="logo-area">
         <div class="logo-icon" aria-hidden="true">🏖️</div>
-
         <div>
-          <h1>Prenota Ombrellone</h1>
-          <p>La tua giornata al mare comincia qui</p>
+          <h1 id="brandName">Prenota Ombrellone</h1>
+          <p id="brandSubtitle">La tua giornata al mare comincia qui</p>
         </div>
       </div>
 
       <div class="header-actions">
-        <a
-          href="mia-prenotazione.html"
-          class="admin-link booking-link"
-          aria-label="Controlla la tua prenotazione"
-        >
+        <a href="mia-prenotazione.html" class="admin-link booking-link">
           <span class="desktop-label">La mia prenotazione</span>
           <span class="mobile-label">La mia</span>
         </a>
-
-        <a
-          href="admin.html"
-          class="admin-link"
-          aria-label="Apri il pannello amministratore"
-        >
+        <a href="admin.html" class="admin-link">
           <span class="desktop-label">Area lido</span>
           <span class="mobile-label">Lido</span>
         </a>
       </div>
-
     </div>
   </header>
 
   <main class="app-container">
-
     <section class="hero-card">
       <div class="hero-content">
         <span class="hero-label">Prenotazione gratuita</span>
-
         <h2>Scegli il tuo posto al sole</h2>
-
-        <p>
-          Seleziona la data, scegli un ombrellone libero e invia la
-          prenotazione. Non è richiesto alcun pagamento online.
+        <p id="heroMessage">
+          Seleziona la data, scegli un ombrellone libero e invia la prenotazione.
         </p>
       </div>
+      <div class="hero-image" aria-hidden="true">☀️</div>
+    </section>
 
-      <div class="hero-image" aria-hidden="true">
-        ☀️
-      </div>
+    <section id="publicInfoBox" class="public-info-box hidden">
+      <span aria-hidden="true">ℹ️</span>
+      <p id="publicInfoText"></p>
     </section>
 
     <section class="quick-access-card">
       <div class="quick-access-icon" aria-hidden="true">🎫</div>
-
       <div class="quick-access-content">
         <span>Hai già inviato una richiesta?</span>
         <strong>Controlla lo stato della tua prenotazione</strong>
       </div>
-
-      <a href="mia-prenotazione.html" class="secondary-button">
-        Controlla prenotazione
-      </a>
+      <a href="mia-prenotazione.html" class="secondary-button">Controlla prenotazione</a>
     </section>
 
     <section class="content-card" aria-labelledby="titoloData">
       <div class="section-heading">
         <div class="step-number">1</div>
-
         <div>
           <h2 id="titoloData">Scegli la data</h2>
           <p>Visualizzerai gli ombrelloni disponibili per quel giorno.</p>
@@ -112,36 +79,20 @@
 
       <div class="date-selection">
         <label for="bookingDate">Data della prenotazione</label>
-
         <div class="date-row">
-          <input
-            type="date"
-            id="bookingDate"
-            name="bookingDate"
-            required
-          >
-
-          <button
-            type="button"
-            id="loadAvailabilityBtn"
-            class="primary-button"
-          >
+          <input type="date" id="bookingDate" name="bookingDate" required>
+          <button type="button" id="loadAvailabilityBtn" class="primary-button">
             Mostra disponibilità
           </button>
         </div>
-
+        <p id="dateRulesText" class="date-rules-text"></p>
         <p id="dateMessage" class="field-message" aria-live="polite"></p>
       </div>
     </section>
 
-    <section
-      id="umbrellaSection"
-      class="content-card hidden"
-      aria-labelledby="titoloOmbrelloni"
-    >
+    <section id="umbrellaSection" class="content-card hidden" aria-labelledby="titoloOmbrelloni">
       <div class="section-heading">
         <div class="step-number">2</div>
-
         <div>
           <h2 id="titoloOmbrelloni">Scegli l’ombrellone</h2>
           <p>Tocca un ombrellone verde per selezionarlo.</p>
@@ -149,381 +100,152 @@
       </div>
 
       <div class="legend" aria-label="Legenda stato ombrelloni">
-
-        <div class="legend-item">
-          <span class="legend-color available"></span>
-          <span>Libero</span>
-        </div>
-
-        <div class="legend-item">
-          <span class="legend-color selected"></span>
-          <span>Selezionato</span>
-        </div>
-
-        <div class="legend-item">
-          <span class="legend-color pending"></span>
-          <span>In attesa</span>
-        </div>
-
-        <div class="legend-item">
-          <span class="legend-color occupied"></span>
-          <span>Prenotato</span>
-        </div>
-
-        <div class="legend-item">
-          <span class="legend-color blocked"></span>
-          <span>Non disponibile</span>
-        </div>
-
+        <div class="legend-item"><span class="legend-color available"></span><span>Libero</span></div>
+        <div class="legend-item"><span class="legend-color selected"></span><span>Selezionato</span></div>
+        <div class="legend-item"><span class="legend-color pending"></span><span>In attesa</span></div>
+        <div class="legend-item"><span class="legend-color occupied"></span><span>Prenotato</span></div>
+        <div class="legend-item"><span class="legend-color blocked"></span><span>Non disponibile</span></div>
       </div>
 
-      <div class="sea-area">
-        <span aria-hidden="true">🌊</span>
-        <strong>MARE</strong>
-        <span aria-hidden="true">🌊</span>
-      </div>
-
-      <div
-        id="umbrellaMap"
-        class="umbrella-map"
-        aria-live="polite"
-      ></div>
+      <div class="sea-area"><span>🌊</span><strong>MARE</strong><span>🌊</span></div>
+      <div id="umbrellaMap" class="umbrella-map" aria-live="polite"></div>
 
       <div id="emptyUmbrellaMessage" class="empty-message hidden">
         <div class="empty-icon">🏖️</div>
-
         <h3>Nessun ombrellone disponibile</h3>
-
-        <p>
-          Per questa data non risultano ombrelloni prenotabili.
-          Prova a selezionare un altro giorno.
-        </p>
+        <p>Prova a selezionare un altro giorno.</p>
       </div>
 
       <p id="umbrellaMessage" class="field-message" aria-live="polite"></p>
     </section>
 
-    <section
-      id="selectionSummary"
-      class="selection-summary hidden"
-      aria-live="polite"
-    >
+    <section id="selectionSummary" class="selection-summary hidden" aria-live="polite">
       <div>
         <span>Hai selezionato</span>
-
-        <strong id="selectedUmbrellaText">
-          Nessun ombrellone
-        </strong>
+        <strong id="selectedUmbrellaText">Nessun ombrellone</strong>
       </div>
-
-      <button
-        type="button"
-        id="changeUmbrellaBtn"
-        class="secondary-button"
-      >
-        Cambia
-      </button>
+      <button type="button" id="changeUmbrellaBtn" class="secondary-button">Cambia</button>
     </section>
 
-    <section
-      id="bookingSection"
-      class="content-card hidden"
-      aria-labelledby="titoloPrenotazione"
-    >
+    <section id="bookingSection" class="content-card hidden" aria-labelledby="titoloPrenotazione">
       <div class="section-heading">
         <div class="step-number">3</div>
-
         <div>
           <h2 id="titoloPrenotazione">Inserisci i tuoi dati</h2>
-
-          <p>
-            I dati saranno usati solamente per gestire la prenotazione.
-          </p>
+          <p>I dati saranno usati solamente per gestire la prenotazione.</p>
         </div>
       </div>
 
       <form id="bookingForm" novalidate>
-
-        <input
-          type="hidden"
-          id="selectedUmbrellaId"
-          name="selectedUmbrellaId"
-        >
-
-        <input
-          type="hidden"
-          id="selectedUmbrellaNumber"
-          name="selectedUmbrellaNumber"
-        >
+        <input type="hidden" id="selectedUmbrellaId">
+        <input type="hidden" id="selectedUmbrellaNumber">
 
         <div class="form-grid">
-
           <div class="form-group">
-            <label for="customerName">
-              Nome e cognome
-              <span aria-hidden="true">*</span>
-            </label>
-
-            <input
-              type="text"
-              id="customerName"
-              name="customerName"
-              placeholder="Mario Rossi"
-              autocomplete="name"
-              maxlength="80"
-              required
-            >
-
+            <label for="customerName">Nome e cognome <span>*</span></label>
+            <input type="text" id="customerName" placeholder="Mario Rossi" autocomplete="name" maxlength="80" required>
             <small class="input-error" id="customerNameError"></small>
           </div>
 
           <div class="form-group">
-            <label for="customerPhone">
-              Numero di telefono
-              <span aria-hidden="true">*</span>
-            </label>
-
-            <input
-              type="tel"
-              id="customerPhone"
-              name="customerPhone"
-              placeholder="333 1234567"
-              autocomplete="tel"
-              inputmode="tel"
-              maxlength="20"
-              required
-            >
-
+            <label for="customerPhone">Numero di telefono <span>*</span></label>
+            <input type="tel" id="customerPhone" placeholder="333 1234567" autocomplete="tel" inputmode="tel" maxlength="25" required>
             <small class="input-error" id="customerPhoneError"></small>
           </div>
 
           <div class="form-group">
-            <label for="numberOfPeople">
-              Numero di persone
-              <span aria-hidden="true">*</span>
+            <label for="customerEmail">
+              Email <span id="emailRequiredMark" class="hidden">*</span>
             </label>
+            <input type="email" id="customerEmail" placeholder="nome@email.it" autocomplete="email" maxlength="120">
+            <small class="input-help">Serve per ricevere conferme e aggiornamenti, se attivati dal lido.</small>
+            <small class="input-error" id="customerEmailError"></small>
+          </div>
 
-            <input
-              type="number"
-              id="numberOfPeople"
-              name="numberOfPeople"
-              min="1"
-              max="20"
-              value="2"
-              required
-            >
-
+          <div class="form-group">
+            <label for="numberOfPeople">Numero di persone <span>*</span></label>
+            <input type="number" id="numberOfPeople" min="1" max="6" value="2" required>
             <small class="input-error" id="numberOfPeopleError"></small>
           </div>
 
           <div class="form-group">
-            <label for="arrivalTime">
-              Orario indicativo di arrivo
-            </label>
-
-            <input
-              type="time"
-              id="arrivalTime"
-              name="arrivalTime"
-            >
+            <label for="arrivalTime">Orario indicativo di arrivo</label>
+            <input type="time" id="arrivalTime">
           </div>
 
           <div class="form-group full-width">
-            <label for="bookingNotes">
-              Note
-            </label>
-
-            <textarea
-              id="bookingNotes"
-              name="bookingNotes"
-              rows="4"
-              maxlength="300"
-              placeholder="Inserisci eventuali richieste o informazioni utili..."
-            ></textarea>
-
-            <div class="character-counter">
-              <span id="notesCounter">0</span>/300
-            </div>
+            <label for="bookingNotes">Note</label>
+            <textarea id="bookingNotes" rows="4" maxlength="300" placeholder="Inserisci eventuali richieste..."></textarea>
+            <div class="character-counter"><span id="notesCounter">0</span>/300</div>
           </div>
-
         </div>
 
         <div class="booking-recap">
           <h3>Riepilogo</h3>
-
-          <div class="recap-row">
-            <span>Data</span>
-            <strong id="recapDate">—</strong>
-          </div>
-
-          <div class="recap-row">
-            <span>Ombrellone</span>
-            <strong id="recapUmbrella">—</strong>
-          </div>
-
-          <div class="recap-row">
-            <span>Pagamento online</span>
-            <strong>Non richiesto</strong>
-          </div>
+          <div class="recap-row"><span>Data</span><strong id="recapDate">—</strong></div>
+          <div class="recap-row"><span>Ombrellone</span><strong id="recapUmbrella">—</strong></div>
+          <div class="recap-row"><span>Pagamento online</span><strong>Non richiesto</strong></div>
         </div>
 
         <div class="privacy-box">
           <label class="checkbox-label">
-
-            <input
-              type="checkbox"
-              id="privacyConsent"
-              name="privacyConsent"
-              required
-            >
-
-            <span>
-              Accetto che i miei dati vengano utilizzati esclusivamente
-              per gestire questa prenotazione.
-            </span>
-
+            <input type="checkbox" id="privacyConsent" required>
+            <span>Accetto che i miei dati vengano utilizzati esclusivamente per gestire questa prenotazione.</span>
           </label>
-
           <small class="input-error" id="privacyConsentError"></small>
         </div>
 
-        <button
-          type="submit"
-          id="submitBookingBtn"
-          class="primary-button submit-button"
-        >
+        <button type="submit" id="submitBookingBtn" class="primary-button submit-button">
           <span id="submitButtonText">Invia prenotazione</span>
         </button>
 
-        <p class="booking-information">
+        <p id="bookingInformation" class="booking-information">
           La prenotazione non prevede alcun pagamento online.
-          Il lido potrà confermarla o contattarti telefonicamente.
         </p>
-
-        <p
-          id="bookingFormMessage"
-          class="form-message"
-          aria-live="polite"
-        ></p>
-
+        <p id="bookingFormMessage" class="form-message" aria-live="polite"></p>
       </form>
     </section>
-
   </main>
 
-  <div
-    id="successModal"
-    class="modal hidden"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="successModalTitle"
-  >
+  <div id="successModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="successModalTitle">
     <div class="modal-backdrop"></div>
-
     <div class="modal-content">
-      <div class="success-icon" aria-hidden="true">✓</div>
-
-      <h2 id="successModalTitle">
-        Prenotazione inviata
-      </h2>
-
-      <p>
-        La tua richiesta è stata registrata correttamente.
-      </p>
+      <div class="success-icon">✓</div>
+      <h2 id="successModalTitle">Prenotazione inviata</h2>
+      <p id="successModalMessage">La tua richiesta è stata registrata correttamente.</p>
 
       <div class="success-details">
-        <div>
-          <span>Codice prenotazione</span>
-          <strong id="successBookingId">—</strong>
-        </div>
-
-        <div>
-          <span>Data</span>
-          <strong id="successBookingDate">—</strong>
-        </div>
-
-        <div>
-          <span>Ombrellone</span>
-          <strong id="successUmbrella">—</strong>
-        </div>
-
-        <div>
-          <span>Stato</span>
-          <strong id="successBookingStatus">In attesa</strong>
-        </div>
+        <div><span>Codice prenotazione</span><strong id="successBookingId">—</strong></div>
+        <div><span>Data</span><strong id="successBookingDate">—</strong></div>
+        <div><span>Ombrellone</span><strong id="successUmbrella">—</strong></div>
+        <div><span>Stato</span><strong id="successBookingStatus">In attesa</strong></div>
       </div>
 
-      <p class="success-note">
-        Conserva il codice della prenotazione. Per controllare lo stato
-        serviranno questo codice e il numero di telefono inserito.
-      </p>
-
+      <p class="success-note">Conserva il codice della prenotazione e il numero di telefono inserito.</p>
       <div class="modal-actions">
-        <a
-          href="mia-prenotazione.html"
-          class="secondary-button"
-        >
-          Controlla lo stato
-        </a>
-
-        <button
-          type="button"
-          id="newBookingBtn"
-          class="primary-button"
-        >
-          Nuova prenotazione
-        </button>
+        <a href="mia-prenotazione.html" class="secondary-button">Controlla lo stato</a>
+        <button type="button" id="newBookingBtn" class="primary-button">Nuova prenotazione</button>
       </div>
     </div>
   </div>
 
-  <div
-    id="toast"
-    class="toast hidden"
-    role="status"
-    aria-live="polite"
-  >
-    <span id="toastIcon" aria-hidden="true">ℹ️</span>
-    <span id="toastMessage"></span>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite">
+    <span id="toastIcon">ℹ️</span><span id="toastMessage"></span>
   </div>
 
   <footer class="main-footer">
-    <p>
-      © <span id="currentYear"></span>
-      Prenota Ombrellone
-    </p>
-
-    <p>
-      Servizio di prenotazione senza pagamento online
-    </p>
+    <p>© <span id="currentYear"></span> <span id="footerBrandName">Prenota Ombrellone</span></p>
+    <p>Servizio di prenotazione senza pagamento online</p>
   </footer>
 
-  <noscript>
-    <div class="noscript-message">
-      Per utilizzare il servizio di prenotazione devi attivare JavaScript
-      nel browser.
-    </div>
-  </noscript>
-
   <script src="app.js"></script>
-
   <script>
-    document.getElementById("currentYear").textContent =
-      new Date().getFullYear();
-
+    document.getElementById("currentYear").textContent = new Date().getFullYear();
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {
-        navigator.serviceWorker
-          .register("sw.js")
-          .catch(function (error) {
-            console.warn(
-              "Service Worker non registrato:",
-              error
-            );
-          });
+        navigator.serviceWorker.register("sw.js").catch(console.warn);
       });
     }
   </script>
-
 </body>
 </html>
