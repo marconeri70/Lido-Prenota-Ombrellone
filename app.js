@@ -13,7 +13,7 @@
 */
 
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxImGmbQ-AYdFAgEmyPOSbm1p_2H-C3i7JppvgTiyf7pkRk9U4cvlIkFmYPR4dO0QWgYA/exec",
+  API_URL: "INCOLLA_QUI_L_URL_DELLA_WEB_APP",
   REQUEST_TIMEOUT: 20000
 };
 
@@ -195,13 +195,15 @@ async function caricaDisponibilita() {
 
   try {
     /*
-      Le prenotazioni vengono richieste tutte e filtrate nell'app.
-      In questo modo il controllo funziona anche quando Google Sheet
-      restituisce la data come valore ISO completo.
+      L'app pubblica riceve soltanto l'ID dell'ombrellone e lo stato.
+      Nomi e numeri di telefono restano protetti nell'Area lido.
     */
-    const [rispostaOmbrelloni, rispostaPrenotazioni] = await Promise.all([
+    const [rispostaOmbrelloni, rispostaDisponibilita] = await Promise.all([
       richiestaGet({ action: "ombrelloni" }),
-      richiestaGet({ action: "prenotazioni" })
+      richiestaGet({
+        action: "disponibilita",
+        data: state.dataSelezionata
+      })
     ]);
 
     if (!rispostaOmbrelloni.ok) {
@@ -210,9 +212,9 @@ async function caricaDisponibilita() {
       );
     }
 
-    if (!rispostaPrenotazioni.ok) {
+    if (!rispostaDisponibilita.ok) {
       throw new Error(
-        rispostaPrenotazioni.error || "Impossibile caricare le prenotazioni."
+        rispostaDisponibilita.error || "Impossibile caricare la disponibilità."
       );
     }
 
@@ -220,19 +222,9 @@ async function caricaDisponibilita() {
       ? rispostaOmbrelloni.ombrelloni
       : [];
 
-    const tutteLePrenotazioni = Array.isArray(rispostaPrenotazioni.prenotazioni)
-      ? rispostaPrenotazioni.prenotazioni
+    state.prenotazioni = Array.isArray(rispostaDisponibilita.disponibilita)
+      ? rispostaDisponibilita.disponibilita
       : [];
-
-    state.prenotazioni = tutteLePrenotazioni.filter(prenotazione => {
-      const stessaData =
-        normalizzaData(prenotazione.data) === state.dataSelezionata;
-
-      const stato = normalizzaTesto(prenotazione.stato);
-      const valida = stato !== "annullata" && stato !== "annullato";
-
-      return stessaData && valida;
-    });
 
     renderizzaMappa();
     dom.umbrellaSection.classList.remove("hidden");
@@ -763,28 +755,18 @@ async function aggiornaDisponibilitaSenzaScorrimento() {
   }
 
   try {
-    const risposta = await richiestaGet({ action: "prenotazioni" });
+    const risposta = await richiestaGet({
+      action: "disponibilita",
+      data: state.dataSelezionata
+    });
 
     if (!risposta.ok) {
       return;
     }
 
-    const elenco = Array.isArray(risposta.prenotazioni)
-      ? risposta.prenotazioni
+    state.prenotazioni = Array.isArray(risposta.disponibilita)
+      ? risposta.disponibilita
       : [];
-
-    state.prenotazioni = elenco.filter(prenotazione => {
-      const stessaData =
-        normalizzaData(prenotazione.data) === state.dataSelezionata;
-
-      const stato = normalizzaTesto(prenotazione.stato);
-
-      return (
-        stessaData &&
-        stato !== "annullata" &&
-        stato !== "annullato"
-      );
-    });
 
     azzeraSelezioneOmbrellone();
     renderizzaMappa();
