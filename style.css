@@ -1318,7 +1318,6 @@ textarea.invalid:focus {
   }
 
   .umbrella-map {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     padding: 13px;
     gap: 10px;
   }
@@ -1379,6 +1378,14 @@ textarea.invalid:focus {
     right: 10px;
     bottom: 10px;
     width: calc(100% - 20px);
+
+    .umbrella-map {
+  padding: 13px;
+  gap: 10px;
+}
+
+.umbrella-map .umbrella {
+  flex: 0 0 92px; 
   }
 }
 
