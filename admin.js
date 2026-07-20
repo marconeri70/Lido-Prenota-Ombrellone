@@ -3,7 +3,7 @@
    ========================================================= */
 
 const ADMIN_CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbxImGmbQ-AYdFAgEmyPOSbm1p_2H-C3i7JppvgTiyf7pkRk9U4cvlIkFmYPR4dO0QWgYA/exec",
+  API_URL: "INCOLLA_QUI_L_URL_DELLA_WEB_APP",
   REQUEST_TIMEOUT: 45000
 };
 
@@ -14,6 +14,9 @@ const adminState = {
   ombrelloni: [],
   blocchiData: [],
   impostazioni: {},
+  prossimePrenotazioni: [],
+  riepilogoProssime: {},
+  whatsappCloud: {},
   toastTimer: null
 };
 
@@ -46,6 +49,7 @@ function collegaEventi() {
   });
   adminDom.adminSearch.addEventListener("input", renderizzaPrenotazioni);
   adminDom.refreshAdminBtn.addEventListener("click", caricaDatiAreaLido);
+  adminDom.overviewRefreshBtn.addEventListener("click", caricaDatiAreaLido);
   adminDom.logoutAdminBtn.addEventListener("click", logout);
   adminDom.addUmbrellaBtn.addEventListener("click", () => apriModaleOmbrellone());
   adminDom.umbrellaForm.addEventListener("submit", salvaOmbrellone);
@@ -53,6 +57,7 @@ function collegaEventi() {
   adminDom.blockForm.addEventListener("submit", bloccaDataOmbrellone);
   adminDom.settingsForm.addEventListener("submit", salvaImpostazioni);
   adminDom.testEmailBtn.addEventListener("click", inviaEmailTest);
+  adminDom.testWhatsappBtn.addEventListener("click", inviaWhatsAppTest);
 
   document.querySelectorAll(".admin-tab").forEach(button => {
     button.addEventListener("click", () => cambiaTab(button.dataset.tab));
@@ -148,6 +153,11 @@ async function caricaDatiAreaLido() {
     adminState.ombrelloni = Array.isArray(risposta.ombrelloni) ? risposta.ombrelloni : [];
     adminState.blocchiData = Array.isArray(risposta.blocchiData) ? risposta.blocchiData : [];
     adminState.impostazioni = risposta.impostazioni || {};
+    adminState.prossimePrenotazioni = Array.isArray(risposta.prossimePrenotazioni)
+      ? risposta.prossimePrenotazioni
+      : [];
+    adminState.riepilogoProssime = risposta.riepilogoProssime || {};
+    adminState.whatsappCloud = risposta.whatsappCloud || {};
     renderizzaTutto();
   } catch (error) {
     mostraToast(error.message || "Errore durante il caricamento.", "error");
@@ -158,10 +168,12 @@ async function caricaDatiAreaLido() {
 
 function renderizzaTutto() {
   adminDom.adminBrandName.textContent = adminState.impostazioni.nomeLido || "Area lido";
+  renderizzaPanoramica();
   renderizzaStatistiche();
   renderizzaPrenotazioni();
   renderizzaOmbrelloni();
   popolaImpostazioni();
+  renderizzaStatoWhatsApp();
   adminDom.bookingListTitle.textContent = `Prenotazioni del ${formattaDataItaliana(adminState.data)}`;
   adminDom.lastUpdateText.textContent = `Aggiornato alle ${new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
 }
@@ -173,8 +185,156 @@ function renderizzaStatistiche() {
   adminDom.statPending.textContent = pending;
   adminDom.statConfirmed.textContent = stati.filter(s => s === "confermata").length;
   adminDom.statCancelled.textContent = stati.filter(s => s === "annullata").length;
-  adminDom.pendingBadge.textContent = pending;
-  adminDom.pendingBadge.classList.toggle("hidden", pending === 0);
+  const pendingFuturi = Number(
+    adminState.riepilogoProssime.inAttesa || 0
+  );
+
+  adminDom.pendingBadge.textContent = pendingFuturi;
+  adminDom.pendingBadge.classList.toggle(
+    "hidden",
+    pendingFuturi === 0
+  );
+}
+
+/* =========================================================
+   PANORAMICA PRENOTAZIONI FUTURE
+   ========================================================= */
+
+function renderizzaPanoramica() {
+  const riepilogo = adminState.riepilogoProssime || {};
+  const prenotazioni = adminState.prossimePrenotazioni || [];
+
+  adminDom.overviewTotal.textContent = String(riepilogo.totale || 0);
+  adminDom.overviewPending.textContent = String(riepilogo.inAttesa || 0);
+  adminDom.overviewConfirmed.textContent = String(riepilogo.confermate || 0);
+  adminDom.overviewDays.textContent = String(riepilogo.giornate || 0);
+
+  const giorni = Number(riepilogo.giorni || 60);
+  const dataFine = riepilogo.dataFine
+    ? formattaDataItaliana(riepilogo.dataFine)
+    : "";
+
+  adminDom.overviewPeriodText.textContent =
+    `Prenotazioni da oggi ai prossimi ${giorni} giorni` +
+    (dataFine ? ` · fino al ${dataFine}` : "");
+
+  adminDom.overviewList.innerHTML = "";
+  adminDom.overviewEmptyState.classList.toggle(
+    "hidden",
+    prenotazioni.length > 0
+  );
+
+  if (!prenotazioni.length) {
+    return;
+  }
+
+  const gruppi = {};
+
+  prenotazioni.forEach(p => {
+    const data = String(p.data || "");
+
+    if (!gruppi[data]) {
+      gruppi[data] = [];
+    }
+
+    gruppi[data].push(p);
+  });
+
+  Object.keys(gruppi)
+    .sort()
+    .forEach(data => {
+      adminDom.overviewList.appendChild(
+        creaGruppoPanoramica(data, gruppi[data])
+      );
+    });
+}
+
+function creaGruppoPanoramica(data, prenotazioni) {
+  const section = document.createElement("section");
+  section.className = "overview-day-group";
+
+  const pending = prenotazioni.filter(
+    p => normalizzaStato(p.stato) === "in_attesa"
+  ).length;
+
+  const header = document.createElement("div");
+  header.className = "overview-day-header";
+
+  const title = document.createElement("div");
+  title.innerHTML =
+    `<span>${escapeHtml(nomeGiornoItaliano(data))}</span>` +
+    `<h3>${escapeHtml(formattaDataItaliana(data))}</h3>` +
+    `<p>${prenotazioni.length} prenotazion${prenotazioni.length === 1 ? "e" : "i"}` +
+    `${pending ? ` · ${pending} da confermare` : ""}</p>`;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "secondary-button overview-open-day";
+  button.textContent = "Apri giornata";
+  button.addEventListener("click", () => apriGiornataPanoramica(data));
+
+  header.append(title, button);
+
+  const list = document.createElement("div");
+  list.className = "overview-day-bookings";
+
+  prenotazioni.forEach(p => {
+    list.appendChild(creaRigaPanoramica(p));
+  });
+
+  section.append(header, list);
+  return section;
+}
+
+function creaRigaPanoramica(p) {
+  const stato = normalizzaStato(p.stato);
+  const row = document.createElement("article");
+  row.className = `overview-booking-row status-${stato}`;
+
+  const umbrella = document.createElement("div");
+  umbrella.className = "overview-umbrella";
+  umbrella.innerHTML =
+    `<span>Ombrellone</span><strong>${escapeHtml(p.ombrellone || "—")}</strong>`;
+
+  const customer = document.createElement("div");
+  customer.className = "overview-customer";
+  customer.innerHTML =
+    `<strong>${escapeHtml(p.nome || "Cliente")}</strong>` +
+    `<span>${escapeHtml(p.telefono || "")}</span>`;
+
+  const details = document.createElement("div");
+  details.className = "overview-details";
+  details.innerHTML =
+    `<span>${Number(p.persone || 0)} persone</span>` +
+    `<span class="booking-status-badge ${stato}">${etichettaStato(stato)}</span>`;
+
+  row.append(umbrella, customer, details);
+  return row;
+}
+
+async function apriGiornataPanoramica(data) {
+  adminDom.adminDate.value = data;
+  adminState.data = data;
+  cambiaTab("prenotazioni");
+  await caricaDatiAreaLido();
+}
+
+function nomeGiornoItaliano(dataIso) {
+  const parti = String(dataIso || "").split("-");
+
+  if (parti.length !== 3) {
+    return "";
+  }
+
+  const data = new Date(
+    Number(parti[0]),
+    Number(parti[1]) - 1,
+    Number(parti[2])
+  );
+
+  return data.toLocaleDateString("it-IT", {
+    weekday: "long"
+  });
 }
 
 /* =========================================================
@@ -451,6 +611,7 @@ function popolaImpostazioni() {
     settingEmailLido: "emailLido", settingDataApertura: "dataApertura",
     settingDataChiusura: "dataChiusura", settingAnticipoMinimo: "anticipoMinimo",
     settingAnticipoMassimo: "anticipoMassimo", settingMaxPersone: "maxPersone",
+    settingGiorniPanoramica: "giorniPanoramica",
     settingDateChiuse: "dateChiuse", settingMessaggioHome: "messaggioHome",
     settingMessaggioInformativo: "messaggioInformativo"
   };
@@ -464,7 +625,9 @@ function popolaImpostazioni() {
     ["settingAnnullamentoCliente", "annullamentoCliente"],
     ["settingEmailAdminNuova", "emailAdminNuova"],
     ["settingEmailClienteStato", "emailClienteStato"],
-    ["settingEmailClienteObbligatoria", "emailClienteObbligatoria"]
+    ["settingEmailClienteObbligatoria", "emailClienteObbligatoria"],
+    ["settingWhatsappAdminNuova", "whatsappAdminNuova"],
+    ["settingWhatsappAdminAnnullamento", "whatsappAdminAnnullamento"]
   ].forEach(([id, key]) => { adminDom[id].checked = valoreBooleano(s[key]); });
 
   const giorni = String(s.giorniChiusi || "").split(",").map(x => x.trim()).filter(Boolean);
@@ -487,11 +650,14 @@ async function salvaImpostazioni(event) {
     anticipoMinimo: adminDom.settingAnticipoMinimo.value,
     anticipoMassimo: adminDom.settingAnticipoMassimo.value,
     maxPersone: adminDom.settingMaxPersone.value,
+    giorniPanoramica: adminDom.settingGiorniPanoramica.value,
     confermaAutomatica: adminDom.settingConfermaAutomatica.checked,
     annullamentoCliente: adminDom.settingAnnullamentoCliente.checked,
     emailAdminNuova: adminDom.settingEmailAdminNuova.checked,
     emailClienteStato: adminDom.settingEmailClienteStato.checked,
     emailClienteObbligatoria: adminDom.settingEmailClienteObbligatoria.checked,
+    whatsappAdminNuova: adminDom.settingWhatsappAdminNuova.checked,
+    whatsappAdminAnnullamento: adminDom.settingWhatsappAdminAnnullamento.checked,
     messaggioHome: adminDom.settingMessaggioHome.value.trim(),
     messaggioInformativo: adminDom.settingMessaggioInformativo.value.trim()
   };
@@ -507,6 +673,38 @@ async function salvaImpostazioni(event) {
   finally { nascondiCaricamento(); }
 }
 
+function renderizzaStatoWhatsApp() {
+  const stato = adminState.whatsappCloud || {};
+  const configurato = Boolean(stato.configurato);
+
+  adminDom.whatsappCloudStatus.classList.toggle(
+    "configured",
+    configurato
+  );
+
+  adminDom.whatsappCloudTitle.textContent = configurato
+    ? "WhatsApp automatico configurato"
+    : "WhatsApp automatico non configurato";
+
+  if (configurato) {
+    adminDom.whatsappCloudDescription.textContent =
+      `Destinatario ${stato.destinatario || ""}` +
+      ` · template ${stato.template || ""}` +
+      ` · lingua ${stato.lingua || "it"}`;
+
+    adminDom.testWhatsappBtn.disabled = false;
+  } else {
+    const mancanti = Array.isArray(stato.mancanti)
+      ? stato.mancanti.join(", ")
+      : "credenziali Cloud API";
+
+    adminDom.whatsappCloudDescription.textContent =
+      `Mancano: ${mancanti}. Configurali nelle Proprietà script di Apps Script.`;
+
+    adminDom.testWhatsappBtn.disabled = true;
+  }
+}
+
 async function inviaEmailTest() {
   mostraCaricamento("Invio email di prova...");
   try {
@@ -515,6 +713,27 @@ async function inviaEmailTest() {
     mostraToast(r.message, "success");
   } catch (error) { mostraToast(error.message, "error"); }
   finally { nascondiCaricamento(); }
+}
+
+async function inviaWhatsAppTest() {
+  mostraCaricamento("Invio WhatsApp di prova...");
+
+  try {
+    const r = await richiestaPost({
+      action: "inviaWhatsAppTest",
+      pin: adminState.pin
+    });
+
+    if (!r.ok) {
+      throw new Error(r.error || "Invio WhatsApp non riuscito.");
+    }
+
+    mostraToast(r.message, "success");
+  } catch (error) {
+    mostraToast(error.message, "error");
+  } finally {
+    nascondiCaricamento();
+  }
 }
 
 /* =========================================================

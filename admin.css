@@ -765,3 +765,202 @@
   .umbrella-admin-actions { grid-template-columns: 1fr; }
   .admin-modal-actions { grid-template-columns: 1fr; }
 }
+
+
+/* =========================================================
+   V1.3 - PANORAMICA FUTURA E WHATSAPP CLOUD
+   ========================================================= */
+
+.overview-days-stat {
+  color: var(--selected);
+}
+
+.overview-period-text {
+  margin-top: 5px;
+  color: var(--text-light);
+  font-size: 0.84rem;
+}
+
+.overview-booking-list {
+  display: grid;
+  gap: 18px;
+}
+
+.overview-day-group {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-soft);
+}
+
+.overview-day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px 19px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, #eef9fd, #ffffff);
+  gap: 18px;
+}
+
+.overview-day-header span {
+  display: block;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.overview-day-header h3 {
+  margin-top: 2px;
+  font-size: 1.22rem;
+}
+
+.overview-day-header p {
+  margin-top: 3px;
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+
+.overview-open-day {
+  flex: 0 0 auto;
+  min-height: 41px;
+  padding: 8px 13px;
+}
+
+.overview-day-bookings {
+  display: grid;
+}
+
+.overview-booking-row {
+  display: grid;
+  grid-template-columns: 95px minmax(180px, 1fr) auto;
+  align-items: center;
+  min-height: 76px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  border-left: 5px solid var(--warning);
+  background: #ffffff;
+  gap: 16px;
+}
+
+.overview-booking-row:last-child {
+  border-bottom: 0;
+}
+
+.overview-booking-row.status-confermata {
+  border-left-color: var(--success);
+}
+
+.overview-umbrella {
+  text-align: center;
+}
+
+.overview-umbrella span {
+  display: block;
+  color: var(--text-light);
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.overview-umbrella strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--primary-dark);
+  font-size: 1.4rem;
+}
+
+.overview-customer strong,
+.overview-customer span {
+  display: block;
+}
+
+.overview-customer span {
+  margin-top: 3px;
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+
+.overview-details {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.overview-details > span:first-child {
+  color: var(--text-light);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.whatsapp-cloud-status {
+  display: flex;
+  align-items: flex-start;
+  margin: 15px 0;
+  padding: 15px;
+  border: 1px solid rgba(220, 53, 69, 0.24);
+  border-radius: 14px;
+  background: var(--danger-light);
+  gap: 12px;
+}
+
+.whatsapp-cloud-status.configured {
+  border-color: rgba(42, 157, 91, 0.3);
+  background: var(--success-light);
+}
+
+.whatsapp-cloud-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: #ffffff;
+  font-size: 23px;
+}
+
+.whatsapp-cloud-status strong {
+  display: block;
+}
+
+.whatsapp-cloud-status p {
+  margin-top: 4px;
+  color: var(--text-light);
+  font-size: 0.82rem;
+}
+
+.notification-test-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.notification-test-actions .secondary-button {
+  flex: 1 1 220px;
+}
+
+@media (max-width: 700px) {
+  .overview-day-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .overview-open-day {
+    width: 100%;
+  }
+
+  .overview-booking-row {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+
+  .overview-details {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+    padding-top: 9px;
+    border-top: 1px dashed var(--border);
+  }
+}

@@ -1,5 +1,5 @@
 /* PRENOTA OMBRELLONE - SERVICE WORKER V1.2 */
-const CACHE_VERSION = "prenota-ombrellone-v1.2.1";
+const CACHE_VERSION = "prenota-ombrellone-v1.3.0";
 const APP_FILES = [
   "./",
   "./index.html",

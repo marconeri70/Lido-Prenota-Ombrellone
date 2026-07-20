@@ -51,12 +51,66 @@
       </div>
 
       <nav class="admin-tabs" aria-label="Sezioni Area lido">
-        <button type="button" class="admin-tab active" data-tab="prenotazioni">📋 Prenotazioni <span id="pendingBadge" class="tab-badge hidden">0</span></button>
+        <button type="button" class="admin-tab active" data-tab="panoramica">
+          📅 Panoramica
+          <span id="pendingBadge" class="tab-badge hidden">0</span>
+        </button>
+        <button type="button" class="admin-tab" data-tab="prenotazioni">📋 Giorno selezionato</button>
         <button type="button" class="admin-tab" data-tab="ombrelloni">🏖️ Ombrelloni</button>
         <button type="button" class="admin-tab" data-tab="impostazioni">⚙️ Impostazioni</button>
       </nav>
 
-      <section id="tab-prenotazioni" class="tab-panel active">
+      <section id="tab-panoramica" class="tab-panel active">
+        <section class="admin-stats overview-stats">
+          <article class="stat-card stat-total">
+            <span>In arrivo</span>
+            <strong id="overviewTotal">0</strong>
+          </article>
+
+          <article class="stat-card stat-pending">
+            <span>Da confermare</span>
+            <strong id="overviewPending">0</strong>
+          </article>
+
+          <article class="stat-card stat-confirmed">
+            <span>Confermate</span>
+            <strong id="overviewConfirmed">0</strong>
+          </article>
+
+          <article class="stat-card overview-days-stat">
+            <span>Giornate occupate</span>
+            <strong id="overviewDays">0</strong>
+          </article>
+        </section>
+
+        <section class="admin-panel">
+          <div class="admin-panel-heading">
+            <div>
+              <span class="admin-panel-kicker">Agenda futura</span>
+              <h2>Prossime prenotazioni</h2>
+              <p id="overviewPeriodText" class="overview-period-text"></p>
+            </div>
+
+            <button
+              type="button"
+              id="overviewRefreshBtn"
+              class="secondary-button"
+            >
+              Aggiorna panoramica
+            </button>
+          </div>
+
+          <div id="overviewList" class="overview-booking-list"></div>
+
+          <div id="overviewEmptyState" class="admin-empty-state hidden">
+            <div>📅</div>
+            <h3>Nessuna prenotazione in arrivo</h3>
+            <p>Nel periodo controllato non risultano prenotazioni attive.</p>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-prenotazioni" class="tab-panel">
         <section class="admin-stats">
           <article class="stat-card stat-total"><span>Totale</span><strong id="statTotal">0</strong></article>
           <article class="stat-card stat-pending"><span>In attesa</span><strong id="statPending">0</strong></article>
@@ -115,7 +169,8 @@
               <div class="form-group"><label for="settingAnticipoMinimo">Anticipo minimo (giorni)</label><input id="settingAnticipoMinimo" type="number" min="0" max="365"></div>
               <div class="form-group"><label for="settingAnticipoMassimo">Anticipo massimo (giorni)</label><input id="settingAnticipoMassimo" type="number" min="1" max="730"></div>
               <div class="form-group"><label for="settingMaxPersone">Persone massime per ombrellone</label><input id="settingMaxPersone" type="number" min="1" max="30"></div>
-              <div class="form-group"><label for="settingDateChiuse">Date chiuse straordinarie</label><input id="settingDateChiuse" placeholder="2026-08-15, 2026-08-20"></div>
+              <div class="form-group"><label for="settingGiorniPanoramica">Giorni mostrati nella panoramica</label><input id="settingGiorniPanoramica" type="number" min="1" max="365"></div>
+              <div class="form-group full-width"><label for="settingDateChiuse">Date chiuse straordinarie</label><input id="settingDateChiuse" placeholder="2026-08-15, 2026-08-20"></div>
             </div>
 
             <fieldset class="closed-days-fieldset">
@@ -140,8 +195,24 @@
               <label class="setting-switch"><input id="settingEmailAdminNuova" type="checkbox"><span><strong>Email al lido</strong><small>Invia un avviso per ogni nuova prenotazione e annullamento cliente.</small></span></label>
               <label class="setting-switch"><input id="settingEmailClienteStato" type="checkbox"><span><strong>Email al cliente</strong><small>Invia conferme e cambi di stato quando il cliente inserisce l’email.</small></span></label>
               <label class="setting-switch"><input id="settingEmailClienteObbligatoria" type="checkbox"><span><strong>Email cliente obbligatoria</strong><small>Rende obbligatorio il campo email nella prenotazione.</small></span></label>
+              <label class="setting-switch"><input id="settingWhatsappAdminNuova" type="checkbox"><span><strong>WhatsApp per nuova prenotazione</strong><small>Invia automaticamente un messaggio al numero WhatsApp del lido.</small></span></label>
+              <label class="setting-switch"><input id="settingWhatsappAdminAnnullamento" type="checkbox"><span><strong>WhatsApp per annullamento</strong><small>Avvisa quando un cliente annulla autonomamente.</small></span></label>
             </div>
-            <button type="button" id="testEmailBtn" class="secondary-button">Invia email di prova</button>
+
+            <div id="whatsappCloudStatus" class="whatsapp-cloud-status">
+              <div class="whatsapp-cloud-icon">💬</div>
+              <div>
+                <strong id="whatsappCloudTitle">WhatsApp automatico non configurato</strong>
+                <p id="whatsappCloudDescription">
+                  Configura la WhatsApp Business Cloud API nelle Proprietà script.
+                </p>
+              </div>
+            </div>
+
+            <div class="notification-test-actions">
+              <button type="button" id="testEmailBtn" class="secondary-button">Invia email di prova</button>
+              <button type="button" id="testWhatsappBtn" class="secondary-button">Invia WhatsApp di prova</button>
+            </div>
           </div>
 
           <div class="settings-section">
